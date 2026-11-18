@@ -1,6 +1,6 @@
 {
   "name": "create-tauri-cordis-plugin",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Scaffolds a TypeScript + React plugin project for tauri-cordis applications",
   "type": "module",
   "license": "MIT",

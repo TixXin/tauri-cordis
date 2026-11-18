@@ -35,10 +35,10 @@ export function projectFiles(options) {
       typecheck: "tsc --noEmit",
     },
     devDependencies: {
-      "@tauri-cordis/cli": "^0.1.0",
+      "@tauri-cordis/cli": "^0.2.0",
       "@types/react": "^19.1.8",
       react: "^19.1.0",
-      "tauri-cordis": "^0.1.0",
+      "tauri-cordis": "^0.2.0",
       typescript: "~5.8.3",
     },
     [appKey]: {

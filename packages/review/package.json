@@ -1,6 +1,6 @@
 {
   "name": "@tauri-cordis/review",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Version-to-version plugin source and bundle diff analyzer for tauri-cordis markets",
   "type": "module",
   "license": "MIT",
@@ -34,5 +34,8 @@
   },
   "scripts": {
     "test": "node --test \"test/**/*.test.mjs\""
+  },
+  "dependencies": {
+    "@tauri-cordis/manifest": "workspace:*"
   }
 }

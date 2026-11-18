@@ -1,6 +1,6 @@
 {
   "name": "tauri-cordis",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Everything-is-a-plugin runtime base for Tauri + Node + React built on Cordis: host supervisor protocol, versioned services, managed side effects, and window slots",
   "type": "module",
   "license": "MIT",

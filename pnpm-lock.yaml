@@ -62,7 +62,11 @@ importers:
 
   packages/market: {}
 
-  packages/review: {}
+  packages/review:
+    dependencies:
+      '@tauri-cordis/manifest':
+        specifier: workspace:*
+        version: link:../manifest
 
   packages/tauri-cordis:
     dependencies:

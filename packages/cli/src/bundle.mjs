@@ -1,6 +1,8 @@
 import * as esbuild from "esbuild";
+import { existsSync } from "node:fs";
 import { isBuiltin } from "node:module";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { BuildError } from "./errors.mjs";
 import { isPackageOrSubpath, sharedPath } from "./shared.mjs";
 
@@ -67,7 +69,7 @@ function hostSharedPlugin(names) {
     name: "fuyu-host-shared",
     setup(build) {
       if (filter) build.onResolve({ filter }, (args) => ({ path: args.path, external: true }));
-    },
+      },
   };
 }
 
