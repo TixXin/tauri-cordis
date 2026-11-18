@@ -1,0 +1,96 @@
+import { Context, Service } from "tauri-cordis";
+import { PACKAGES_DIR, dataDirOf, readBuiltins, readManifest, serviceError, startHost, type BuiltinCatalog, type Host, type PluginPackage, type PluginStatus, type ServiceEntry, type ServicesApi } from "tauri-cordis/host";
+
+class Counter extends Service {
+  value = 0;
+  constructor(ctx: Context) {
+    super(ctx, "counter");
+  }
+}
+
+const host: Host = await startHost({ dir: "/tmp", watch: true, onLog: (entry) => entry.text });
+const states: PluginStatus["state"][] = host.status().map((entry) => entry.state);
+void Counter;
+void states;
+
+const offered: ServiceEntry[] = host.services();
+const stopWatching: () => void = host.watchServices((list) => list.map((entry) => entry.name.length));
+const detach: () => void = host.serviceHub.attachWindows({ connected: () => ["main"], publish: () => {} });
+void host.serviceHub.windowCall("service.call", { service: "timers/v1", method: "list" }, "main");
+// @ts-expect-error only the three service calls go to the hub
+void host.serviceHub.windowCall("plugin.call", {}, "main");
+const failed: string = serviceError("not-ready", "no provider").code;
+const known: boolean = SERVICE_CALLS.includes("service.on");
+declare const services: ServicesApi;
+const echo = { name: "demo.echo/v1", methods: { echo: {} }, events: { said: {} } } as const;
+const handle = services.provide(echo, { echo: (params, caller) => ({ params, window: caller.window ?? null }) });
+const delivered: boolean = handle.emit("said", { at: 1 });
+const reply: Promise<unknown> = services.get(echo).echo({ text: "hi" });
+void services.get(echo).on("said", () => {});
+void offered;
+void stopWatching;
+void detach;
+void failed;
+void known;
+void delivered;
+void reply;
+
+import { connectHost, createServiceProxy, type HostConnection } from "tauri-cordis/client";
+import { CLOSE, SERVICE_CALLS, SERVICE_TIMEOUT_MS, WINDOW_ORIGINS, type ServiceCallName } from "tauri-cordis/protocol";
+import type { ServiceDefinitionLike } from "tauri-cordis";
+
+const connection: HostConnection = connectHost<{ plugins: PluginStatus[] }>({
+  resolve: async () => ({ port: 1, token: "t" }),
+  window: "main",
+  onSnapshot: (snapshot) => snapshot.plugins.length,
+});
+const code: 4401 = CLOSE.badToken;
+void connection;
+void code;
+void WINDOW_ORIGINS;
+
+const withBuiltins: Host = await startHost({ dir: "/tmp", builtins: "/app/builtins", dataDir: "/tmp/data" });
+const builtinKinds: ("essential" | "builtin")[] = withBuiltins.builtins().map((entry) => entry.kind);
+const catalog: BuiltinCatalog = readBuiltins("/app/builtins");
+const folder: string = dataDirOf("/tmp/data", catalog.plugins[0]?.id ?? "timer");
+void builtinKinds;
+void folder;
+
+const sourced: Host = await startHost({ dir: "/tmp", appVersion: "0.6.0" });
+const sources: (string | undefined)[] = sourced.status().map((entry) => entry.source);
+const undeclared: string[] | undefined = sourced.status()[0]?.undeclared?.provides;
+const manifestErrors = sourced.status().flatMap((entry) => (entry.blocked?.by === "manifest" ? entry.blocked.errors.map((issue) => issue.code) : []));
+const installed: PluginPackage = readManifest(`/tmp/${PACKAGES_DIR}/@ann/weather`, { allowExperimental: false, appVersion: "0.6.0" });
+const windows: string[] = installed.clients.map((client) => client.window);
+void sources;
+void undeclared;
+void manifestErrors;
+void windows;
+
+type EchoMethods = { echo(params: { text: string }): { text: string }; count(): { n: number } };
+type EchoEvents = { said: { at: number } };
+declare const typedEcho: ServiceDefinitionLike<EchoMethods, EchoEvents, {}>;
+declare const pluginCtx: Context;
+const typedHandle = pluginCtx.services.provide(typedEcho, { echo: ({ text }) => ({ text }), count: () => ({ n: 1 }) });
+typedHandle.emit("said", { at: 1 });
+// @ts-expect-error the payload of said is { at }
+typedHandle.emit("said", { when: 1 });
+// @ts-expect-error a provider must implement every declared method
+pluginCtx.services.provide(typedEcho, { echo: ({ text }) => ({ text }) });
+const typedReply: Promise<{ text: string }> = pluginCtx.services.get(typedEcho).echo({ text: "hi" });
+const counted: Promise<{ n: number }> = pluginCtx.services.get(typedEcho).count();
+// @ts-expect-error echo needs its text
+void pluginCtx.services.get(typedEcho).echo({});
+const version: Promise<{ version: string }> = pluginCtx.rust.call<{ version: string }>("app.version", null, { timeoutMs: 1000 });
+void pluginCtx.rust.on("media", (data) => data);
+const proxy = createServiceProxy((method, params, options) => connection.call(method, params, options));
+const windowReply: Promise<{ text: string }> = proxy.get(typedEcho).echo({ text: "hi" });
+void proxy.get(typedEcho).on("said", (data) => data.at.toFixed());
+const callName: ServiceCallName = SERVICE_CALLS[0];
+const defaultTimeout: 30000 = SERVICE_TIMEOUT_MS;
+void [typedReply, counted, version, windowReply, callName, defaultTimeout];
+
+import { defineService as defineFromBase } from "tauri-cordis/services";
+const pingV1 = defineFromBase<{ ping(): { ok: boolean } }>("demo.ping/v1", { methods: { ping: true } });
+const pinged: Promise<{ ok: boolean }> = pluginCtx.services.get(pingV1).ping();
+void pinged;

@@ -1,0 +1,17 @@
+import { HOST_SHARED_MODULES, SHARED_MODULES } from "tauri-cordis/protocol";
+
+export const DEFAULT_SHARED_MODULES = Object.freeze({ ...SHARED_MODULES });
+
+export const HOST_EXTERNALS = Object.freeze([...HOST_SHARED_MODULES]);
+
+export const APP_MODULES = Object.freeze(["react", "react-dom", "fuyu-plugin", "tauri-cordis"]);
+
+export const INSTALLED_PACKAGE_DEPTH = 3;
+
+export const isPackageOrSubpath = (specifier, name) => specifier === name || specifier.startsWith(`${name}/`);
+
+export function sharedPath(output, target, packageDepth = null) {
+  if (packageDepth === null || packageDepth === undefined) return `/${target}`;
+  const depth = output.split("/").length - 1 + packageDepth;
+  return `${"../".repeat(depth)}${target}`;
+}

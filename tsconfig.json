@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": [
+      "ES2022"
+    ],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "noEmit": true,
+    "types": []
+  },
+  "include": [
+    "packages/tauri-cordis/src/**/*.d.mts",
+    "packages/tauri-cordis/test/types.check.mts",
+    "packages/manifest/src/**/*.d.mts",
+    "packages/market/src/**/*.d.mts",
+    "packages/review/src/**/*.d.mts",
+    "packages/cli/src/**/*.d.mts",
+    "packages/create-plugin/src/**/*.d.mts"
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "name": "@tauri-cordis/review",
+  "version": "0.1.0",
+  "description": "Version-to-version plugin source and bundle diff analyzer for tauri-cordis markets",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TixXin/tauri-cordis.git",
+    "directory": "packages/review"
+  },
+  "homepage": "https://github.com/TixXin/tauri-cordis",
+  "bugs": {
+    "url": "https://github.com/TixXin/tauri-cordis/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "types": "./src/index.d.mts",
+      "default": "./src/index.mjs"
+    },
+    "./cli": "./src/cli.mjs",
+    "./package.json": "./package.json"
+  },
+  "engines": {
+    "node": ">=22.15"
+  },
+  "scripts": {
+    "test": "node --test \"test/**/*.test.mjs\""
+  }
+}

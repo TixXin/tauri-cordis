@@ -1,0 +1,6 @@
+[workspace]
+resolver = "2"
+members = [
+  "crates/tauri-cordis",
+  "crates/tauri-cordis-macros",
+]

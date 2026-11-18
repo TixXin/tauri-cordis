@@ -1,0 +1,49 @@
+{
+  "name": "@tauri-cordis/cli",
+  "version": "0.1.0",
+  "description": "CLI toolkit (build, pack, check, dev, review, keygen, sign) for tauri-cordis plugins",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TixXin/tauri-cordis.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/TixXin/tauri-cordis",
+  "bugs": {
+    "url": "https://github.com/TixXin/tauri-cordis/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "bin": {
+    "tauri-cordis-plugin": "bin/tauri-cordis-plugin.mjs",
+    "fuyu-plugin": "bin/fuyu-plugin.mjs"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.d.mts",
+      "default": "./src/index.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "engines": {
+    "node": ">=22.15"
+  },
+  "dependencies": {
+    "@tauri-cordis/manifest": "workspace:*",
+    "@tauri-cordis/market": "workspace:*",
+    "@tauri-cordis/review": "workspace:*",
+    "esbuild": "0.28.1",
+    "tauri-cordis": "workspace:*"
+  },
+  "scripts": {
+    "test": "node --test \"test/**/*.test.mjs\""
+  }
+}

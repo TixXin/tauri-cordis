@@ -1,0 +1,20 @@
+{
+  "name": "tauri-cordis-monorepo",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "test": "node --test \"packages/*/test/**/*.test.mjs\"",
+    "check:types": "tsc -p tsconfig.json",
+    "check:pack": "node scripts/verify-pack.mjs",
+    "check": "pnpm run check:types && pnpm run test && pnpm run check:pack"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.8",
+    "eslint": "^10.14.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.72.1"
+  }
+}

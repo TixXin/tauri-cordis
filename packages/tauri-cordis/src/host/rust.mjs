@@ -1,0 +1,120 @@
+import { PEER_GONE, RpcError } from "./rpc.mjs";
+import { SOURCE } from "./sources.mjs";
+
+export const RUST_TIMEOUT_MS = 120_000;
+const FORBIDDEN = "forbidden";
+const RUST_SOURCE = "builtin";
+const NAME = /^[a-z][A-Za-z0-9-]*(\.[a-z][A-Za-z0-9-]*)*$/;
+
+export function rustError(code, message, data) {
+  return new RpcError(code, message, data);
+}
+
+function checkName(kind, name) {
+  if (typeof name !== "string" || !NAME.test(name)) throw rustError("bad-params", `${String(name)} is not the name of a Rust ${kind}`);
+}
+
+function entryOf(ctx) {
+  let fiber = ctx?.fiber;
+  while (fiber) {
+    if (fiber.entry) return fiber.entry;
+    const next = fiber.parent?.fiber;
+    if (!next || next === fiber) return null;
+    fiber = next;
+  }
+  return null;
+}
+
+function rustCaller(ctx) {
+  const entry = entryOf(ctx);
+  const source = entry?.options?.[SOURCE]?.source ?? null;
+  return { plugin: entry?.options?.id ?? null, source, allowed: source === RUST_SOURCE };
+}
+
+function checkCaller(ctx, what) {
+  const caller = rustCaller(ctx);
+  if (caller.allowed) return;
+  const who = caller.plugin ? `${caller.plugin} (${caller.source ?? "no source"})` : "code outside any plugin";
+  throw rustError(FORBIDDEN, `${what}: only built-in plugins call Rust directly; ${who} goes through services instead`, { plugin: caller.plugin, source: caller.source });
+}
+
+export class RustBridge {
+  constructor(usage = null) {
+    this.rpc = null;
+    this.usage = usage;
+    this.listeners = new Map();
+  }
+
+  install(ctx) {
+    const bridge = this;
+    return ctx.reflect.accessor("rust", {
+      get() {
+        const caller = this;
+        return Object.freeze({
+          call: (method, params, options) => bridge.call(caller, method, params, options),
+          on: (event, listener) => bridge.on(caller, event, listener),
+        });
+      },
+    });
+  }
+
+  attach(rpc) {
+    this.rpc = rpc;
+    rpc.handle("event", (params) => this.deliver(params));
+  }
+
+  counts() {
+    const result = {};
+    for (const hooks of this.listeners.values()) {
+      for (const hook of hooks) result[hook.owner] = (result[hook.owner] ?? 0) + 1;
+    }
+    return result;
+  }
+
+  deliver(params) {
+    if (typeof params?.name !== "string" || !NAME.test(params.name)) return;
+    const hooks = this.listeners.get(params.name);
+    if (!hooks) return;
+    const data = params.data ?? null;
+    for (const hook of [...hooks]) {
+      if (hook.removed) continue;
+      try {
+        hook.run(data);
+      } catch (error) {
+        hook.ctx.logger.error(error);
+      }
+    }
+  }
+
+  call(ctx, method, params, options = {}) {
+    try {
+      checkCaller(ctx, `ctx.rust.call(${String(method)})`);
+      checkName("method", method);
+    } catch (error) {
+      return Promise.reject(error);
+    }
+    if (!this.rpc) return Promise.reject(rustError(PEER_GONE, `Rust is not connected, so ${method} cannot be called`, { method }));
+    const timeoutMs = Number.isInteger(options?.timeoutMs) && options.timeoutMs > 0 ? Math.min(options.timeoutMs, RUST_TIMEOUT_MS) : RUST_TIMEOUT_MS;
+    const controller = new AbortController();
+    const stop = ctx.effect(() => () => controller.abort(rustError("inactive", `the plugin stopped while waiting for Rust's ${method}`, { method })), `ctx.rust.call(${method})`);
+    return this.rpc.call(method, params ?? null, { timeoutMs, onProgress: options?.onProgress, signal: controller.signal }).finally(() => void stop());
+  }
+
+  on(ctx, event, listener) {
+    checkCaller(ctx, `ctx.rust.on(${String(event)})`);
+    checkName("event", event);
+    if (typeof listener !== "function") throw rustError("bad-params", `ctx.rust.on(${event}) needs a listener`);
+    const owner = entryOf(ctx).options.id;
+    const run = this.usage ? this.usage.wrap(owner, listener) : listener;
+    return ctx.effect(() => {
+      const hook = { ctx, owner, run, removed: false };
+      const hooks = this.listeners.get(event) ?? new Set();
+      this.listeners.set(event, hooks.add(hook));
+      return () => {
+        hook.removed = true;
+        hooks.delete(hook);
+        if (!hooks.size && this.listeners.get(event) === hooks) this.listeners.delete(event);
+      };
+    }, `ctx.rust.on(${event})`);
+  }
+}

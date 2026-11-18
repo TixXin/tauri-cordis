@@ -1,0 +1,48 @@
+{
+  "name": "create-tauri-cordis-plugin",
+  "version": "0.1.0",
+  "description": "Scaffolds a TypeScript + React plugin project for tauri-cordis applications",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TixXin/tauri-cordis.git",
+    "directory": "packages/create-plugin"
+  },
+  "homepage": "https://github.com/TixXin/tauri-cordis",
+  "bugs": {
+    "url": "https://github.com/TixXin/tauri-cordis/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "bin": {
+    "create-tauri-cordis-plugin": "bin/create-tauri-cordis-plugin.mjs"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.d.mts",
+      "default": "./src/index.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "engines": {
+    "node": ">=22.15"
+  },
+  "dependencies": {
+    "@tauri-cordis/manifest": "workspace:*"
+  },
+  "devDependencies": {
+    "@tauri-cordis/cli": "workspace:*",
+    "tauri-cordis": "workspace:*"
+  },
+  "scripts": {
+    "test": "node --test \"test/**/*.test.mjs\""
+  }
+}

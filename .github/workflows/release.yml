@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  publish-npm:
+    name: Publish npm packages
+    runs-on: ubuntu-latest
+    environment: npm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          registry-url: "https://registry.npmjs.org"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run check:types
+      - run: pnpm test
+      - name: Pack and publish npm packages in dependency order
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          mkdir -p .tmp/tarballs
+          for dir in packages/manifest packages/market packages/review packages/tauri-cordis packages/cli packages/create-plugin; do
+            name=$(node -p "JSON.parse(require('fs').readFileSync('$dir/package.json','utf8')).name")
+            version=$(node -p "JSON.parse(require('fs').readFileSync('$dir/package.json','utf8')).version")
+            if npm view "$name@$version" version >/dev/null 2>&1; then
+              echo "$name@$version is already on npm; skipped."
+            else
+              tarball=$(pnpm --dir "$dir" pack --pack-destination "$(pwd)/.tmp/tarballs" | tail -n 1)
+              npm publish "$tarball" --access public --provenance
+            fi
+          done
+
+  publish-crates:
+    name: Publish Rust crates
+    runs-on: ubuntu-latest
+    environment: crates
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo test --workspace
+      - name: Publish crates in dependency order
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: |
+          cargo publish -p tauri-cordis-macros || echo "tauri-cordis-macros publish skipped or already published"
+          sleep 15
+          cargo publish -p tauri-cordis

@@ -1,0 +1,41 @@
+{
+  "name": "@tauri-cordis/manifest",
+  "version": "0.1.0",
+  "description": "Plugin manifest validation, deterministic zip packaging, and Ed25519 package signatures for tauri-cordis",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TixXin/tauri-cordis.git",
+    "directory": "packages/manifest"
+  },
+  "homepage": "https://github.com/TixXin/tauri-cordis",
+  "bugs": {
+    "url": "https://github.com/TixXin/tauri-cordis/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "types": "./src/index.d.mts",
+      "default": "./src/index.mjs"
+    },
+    "./names": {
+      "types": "./src/names.d.mts",
+      "default": "./src/names.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "engines": {
+    "node": ">=22.15"
+  },
+  "scripts": {
+    "test": "node --test \"test/**/*.test.mjs\""
+  }
+}
