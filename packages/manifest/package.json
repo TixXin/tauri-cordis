@@ -4,6 +4,16 @@
   "description": "Plugin manifest validation, deterministic zip packaging, and Ed25519 package signatures for tauri-cordis",
   "type": "module",
   "license": "MIT",
+  "keywords": [
+    "tauri",
+    "cordis",
+    "tauri-cordis",
+    "plugin",
+    "manifest",
+    "package",
+    "signature",
+    "ed25519"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/TixXin/tauri-cordis.git",
