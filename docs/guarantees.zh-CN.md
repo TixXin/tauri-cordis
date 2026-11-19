@@ -1,9 +1,11 @@
-# 插件平台第 3 版：内核的保证清单
+# 保证清单
 
-方案「从 rutis 借鉴的」里的「保证清单，每条配测试」（[方案](v3-everything-plugin.md)）。这一页列出内核（宿主进程、它和 Rust 之间的管道、它给窗口开的 WebSocket）对插件和对浮屿的每一条承诺，一条一行，每条都写明哪个测试在守着它。做成开源基座以后，这是别人敢用的依据。
+[English](./guarantees.md) | 简体中文
+
+这一页列出运行时（宿主进程、它和 Rust 之间的管道、它给窗口开的 WebSocket）对插件和对接入它的应用的每一条承诺，一条一行，每条都写明哪个测试在守着它。两份不一致时以[英文版](./guarantees.md)为准。
 
 - 测试文件都在 `packages/tauri-cordis/test/`（表里省掉这个前缀），Rust 的在 `crates/tauri-cordis/`。
-- 跑法：`node --test packages/tauri-cordis/test/`（也在 `pnpm test` 里）；Rust 的 `cargo test --manifest-path src-tauri/Cargo.toml -p plugin-base`。
+- 跑法：`pnpm test`；Rust 的 `cargo test --workspace`。
 - **状态**：「守住」= 测试通过；「做不到」= 内核现在做不到，测试已经写好并标成 `todo`（跑的时候显示 ⚠，不算失败），改好之后去掉 `todo`，状态改成「守住」。
 - 加承诺、改承诺时，测试和这一页在同一个提交里改。一条承诺没有测试，就不算承诺。
 
@@ -38,7 +40,7 @@
 | 13 | 内核给插件**受管定时器**（`ctx.setTimeout`、`ctx.setInterval`），插件停用时自动清掉 | `guarantees-more.test.mjs` › the kernel gives plugins managed timers that stop with them | 守住 |
 | 14 | 宿主的 `stop` 让每个插件的清理都执行，使用者先于提供者 | `guarantees-more.test.mjs` › stopping the host runs the cleanup of every plugin, dependents first；`host-flags.test.mjs` › the host runs with code generation from strings disallowed, as the release host does | 守住 |
 
-第 13 条：`plugin-base` 在根上下文挂了 `ctx.setTimeout`、`ctx.setInterval`、`ctx.sleep`（`src/host/timer.mjs`），插件不用声明依赖就能用；内部用 `ctx.effect`，插件停用时清掉，停用时还在 `sleep` 的会以 `inactive` 拒绝；每个插件还活着的定时器数由宿主的 `timers()` 给出，留给第 8 步的资源统计。
+第 13 条：基座在根上下文挂了 `ctx.setTimeout`、`ctx.setInterval`、`ctx.sleep`（`src/host/timer.mjs`），插件不用声明依赖就能用；内部用 `ctx.effect`，插件停用时清掉，停用时还在 `sleep` 的会以 `inactive` 拒绝；每个插件还活着的定时器数由宿主的 `timers()` 给出，留给第 8 步的资源统计。
 
 ## 配置
 
@@ -54,7 +56,7 @@
 | 17 | 反复停用、启用同一个插件 1000 次，不留下定时器、监听器、副作用，JS 堆增长不到 8 MB | `guarantees.test.mjs` › loading and unloading a plugin 1000 times leaves no timers, listeners or effects behind | 守住 |
 | 18 | 在单独的宿主进程里（带 `--disallow-code-generation-from-strings`）装卸 1000 次：活动的句柄和定时器（`process.getActiveResourcesInfo()`）和装卸前一样，GC 后的堆增长不到 2 MB、外部内存不到 1 MB；宿主停下后一个句柄都不剩 | `guarantees-churn.test.mjs` › in a host process, 1000 loads and unloads of a plugin leave the handles, timers and heap as they were（子进程是 `churn-child.mjs`） | 守住 |
 
-第 18 条量出来的数（这台 Mac，Node 26.12）：先热身 50 次，之后 1000 次 GC 后的堆从 8.7 MB 到 9.2 MB，3000 次到 9.4 MB；句柄一直是 1 个（插件自己的那个定时器）。**常驻内存（RSS）会涨**：0 次 29 MB，1000 次 81 MB，2000 次 120 MB，之后 3000、4000 次都停在 121 MB。涨的是 V8 的新生代：频繁分配时它把新生代从 6 MB 撑到上限 67 MB，空闲后回落到 1 MB（`heapTotal` 从 78 MB 回到 12 MB），但 macOS 不催的话不会把这些页从 RSS 里拿走。所以这不是泄漏，有上限；测试不按 RSS 判断，按堆、外部内存和句柄判断。8 小时长跑看的是宿主的 `phys_footprint`，见 [v3-kernel-measurements.md](../../investigations/v3-kernel-measurements.md)。
+第 18 条量出来的数（这台 Mac，Node 26.12）：先热身 50 次，之后 1000 次 GC 后的堆从 8.7 MB 到 9.2 MB，3000 次到 9.4 MB；句柄一直是 1 个（插件自己的那个定时器）。**常驻内存（RSS）会涨**：0 次 29 MB，1000 次 81 MB，2000 次 120 MB，之后 3000、4000 次都停在 121 MB。涨的是 V8 的新生代：频繁分配时它把新生代从 6 MB 撑到上限 67 MB，空闲后回落到 1 MB（`heapTotal` 从 78 MB 回到 12 MB），但 macOS 不催的话不会把这些页从 RSS 里拿走。所以这不是泄漏，有上限；测试不按 RSS 判断，按堆、外部内存和句柄判断。8 小时长跑看的是宿主的 `phys_footprint`，见浮屿仓库的 [v3-kernel-measurements.md](https://github.com/TixXin/fuyu/blob/main/docs/investigations/v3-kernel-measurements.md)。
 
 ## 出错处理
 
@@ -69,9 +71,9 @@
 | 48 | 出错分散在时间窗之外不会触发停用，错误数和最后一个错误照样记下 | `guarantees-health.test.mjs` › errors spread out beyond the window do not switch a plugin off | 守住 |
 | 49 | 在宿主进程里，按调用栈归到插件的没人接的 Promise 拒绝也计入出错次数，反复出现就停用这个插件，宿主不退出 | `main-health.test.mjs` › a plugin whose stray rejections keep coming is switched off and says why | 守住 |
 
-第 20 条：`vendor/cordis` 的 `emit` 打了补丁，逐个 `try/catch`，错误记到监听器所属插件的日志里（`internal/` 开头的内核事件照旧抛出），见 `vendor/README.md`。
+第 20 条：`vendor/cordis` 的 `emit` 打了补丁，逐个 `try/catch`，错误记到监听器所属插件的日志里（`internal/` 开头的内核事件照旧抛出），见 [`vendor/README.md`](../packages/tauri-cordis/vendor/README.md)。
 
-第 21、22 条：`main.mjs` 接住 `uncaughtException` 和 `unhandledRejection`，按错误栈里的文件地址归到插件（`src/host/blame.mjs`），记成 `error` 日志并经 `log` 通知交给 Rust（带 `plugin` 字段），宿主不退出。归不到任何插件的错误（内核自己的）照旧退出，让 Rust 重启宿主。同一个插件短时间内反复出错时停用它，见第 47–49 条，规则写在 [v3-boundary.md](v3-boundary.md)「反复出错自动停用」。
+第 21、22 条：`main.mjs` 接住 `uncaughtException` 和 `unhandledRejection`，按错误栈里的文件地址归到插件（`src/host/blame.mjs`），记成 `error` 日志并经 `log` 通知交给 Rust（带 `plugin` 字段），宿主不退出。归不到任何插件的错误（内核自己的）照旧退出，让 Rust 重启宿主。同一个插件短时间内反复出错时停用它，见第 47–49 条，规则见 [concepts.md](./concepts.md#health)。
 
 ## 安全模式和开发模式
 
@@ -113,7 +115,7 @@
 
 | # | 承诺 | 测试 | 状态 |
 |---|---|---|---|
-| 39 | 带对令牌的窗口拿到快照，调用有回答，事件按顺序到 | `sockets.test.mjs` › a window with the token gets a snapshot, its calls answered and the events in order | 守住 |
+| 39a | 带对令牌的窗口拿到快照，调用有回答，事件按顺序到 | `sockets.test.mjs` › a window with the token gets a snapshot, its calls answered and the events in order | 守住 |
 | 40 | 窗口调用里抛出的错误带着错误码回来 | `sockets.test.mjs` › a thrown error in a call comes back with its code | 守住 |
 | 41 | 来源不在名单里的连接在升级成 WebSocket 之前就被拒 | `sockets.test.mjs` › an unknown origin is refused before the socket opens | 守住 |
 | 42 | 令牌不对、没打招呼、协议版本不对，各用自己的关闭码关掉 | `sockets.test.mjs` › a wrong token, a missing hello and a wrong protocol are each closed with their own code | 守住 |

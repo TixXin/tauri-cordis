@@ -1,0 +1,20 @@
+name: Feature request
+description: Something the runtime should do and does not
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to build
+      description: The app or plugin, and where the runtime stops you. A concrete case is worth more than a general one.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would help
+      description: An interface sketch, if you have one. Say whether it could be a plugin or a service instead of part of the base.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What you do today instead

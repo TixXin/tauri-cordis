@@ -4,6 +4,16 @@
   "description": "CLI toolkit (build, pack, check, dev, review, keygen, sign) for tauri-cordis plugins",
   "type": "module",
   "license": "MIT",
+  "keywords": [
+    "tauri",
+    "cordis",
+    "tauri-cordis",
+    "plugin",
+    "cli",
+    "build",
+    "sign",
+    "review"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/TixXin/tauri-cordis.git",

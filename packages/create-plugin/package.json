@@ -4,6 +4,15 @@
   "description": "Scaffolds a TypeScript + React plugin project for tauri-cordis applications",
   "type": "module",
   "license": "MIT",
+  "keywords": [
+    "tauri",
+    "cordis",
+    "tauri-cordis",
+    "plugin",
+    "create",
+    "scaffold",
+    "template"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/TixXin/tauri-cordis.git",

@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Question or idea
+    url: https://github.com/TixXin/tauri-cordis/discussions
+    about: How to do something, or whether tauri-cordis fits your app
+  - name: Security problem
+    url: https://github.com/TixXin/tauri-cordis/security/advisories/new
+    about: Report privately. Please do not open a public issue
+  - name: A problem with Fuyu, the app
+    url: https://github.com/TixXin/fuyu/issues
+    about: Fuyu has its own repository
