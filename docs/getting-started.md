@@ -282,14 +282,14 @@ Installing from a file or a market means verifying the package first. That is wh
 
 ## Before you ship
 
-The example runs from its checkout. A shipped app has more to do, and the library does not do it for you in 0.2:
+The example runs from its checkout. A shipped app has more to do, and the library does not do it for you in 0.3:
 
 - **Bundle the host.** `main.mjs` runs from `node_modules` with its dependencies. Put the `tauri-cordis` package (with its `vendor` folder and dependencies), your built-in plugins and your service definitions into the app's resources, and point `HOST_SCRIPT` and `--builtins` at `app.path().resource_dir()`. A bundler that produces one file works too; test it with `--disallow-code-generation-from-strings` on.
 - **Containment.** Implement `Containment` so the host and anything it started die with the app even when the app is killed: a Job Object on Windows, a process group elsewhere. The crate has the hook, not the implementation.
 - **Node on Linux.** `official_download` has archives for Windows and macOS. On Linux there is nothing to download, so the machine needs Node 22.15 or newer.
-- **A Node override.** `NodeSearch::from_env` reads the environment variable `FUYU_NODE` as an explicit path. The name comes from Fuyu; see [stability](./stability.md#names-inherited-from-fuyu).
-- **Plugin manifests.** A third-party plugin's `package.json` uses the key `fuyu` in 0.2, whatever your app is called. [Writing a plugin](./writing-plugins.md) has the fields.
-- **Slot names in the tools.** `createSlots` takes your slot names, but the `SlotName` type and `tauri-cordis-plugin check` know only Fuyu's. Expect a cast in TypeScript and an "unknown slot" finding from `check`.
+- **A Node override.** `NodeSearch::from_env` reads the environment variable `CORDIS_NODE` as an explicit path; see [stability](./stability.md#default-names).
+- **Plugin manifests.** A third-party plugin's `package.json` uses the key `cordis`, whatever your app is called. [Writing a plugin](./writing-plugins.md) has the fields.
+- **Slot names in the tools.** `createSlots` takes your slot names, but the `SlotName` type and `tauri-cordis-plugin check` know only the built-in set. Expect a cast in TypeScript and an "unknown slot" finding from `check`.
 
 ## Checking that it works
 

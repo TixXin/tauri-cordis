@@ -1,4 +1,3 @@
-export * from "./executable.mjs";
 export * from "./manifest.mjs";
 export * from "./names.mjs";
 export * from "./package.mjs";

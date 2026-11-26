@@ -5,9 +5,9 @@
   "license": "MIT",
   "repository": "github:demo/word-count",
   "engines": {
-    "fuyu": ">=0.1.0"
+    "cordis": ">=0.1.0"
   },
-  "fuyu": {
+  "cordis": {
     "manifest": 1,
     "displayName": {
       "zh-CN": "字数统计",

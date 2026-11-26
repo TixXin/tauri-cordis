@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { lstatSync, readdirSync, readFileSync } from "node:fs";
 import { join, relative, sep } from "node:path";
-import { EXECUTABLE_EXTENSIONS, executableKind, zipEntryNames } from "@tauri-cordis/manifest";
+import { EXECUTABLE_EXTENSIONS, executableKind, zipEntryNames } from "../../manifest/src/executable.mjs";
 
 export { executableKind, zipEntryNames };
 

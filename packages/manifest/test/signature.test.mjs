@@ -31,7 +31,7 @@ test("author and market signatures live in one file and keep the digest", () => 
   const read = readPackage(both);
   assert.deepEqual(read.signatures.signatures.map((entry) => entry.role), ["author", "market"]);
   assert.equal(read.signatures.digest, digest);
-  assert.ok(!read.files.some((file) => file.path === "fuyu-signature.json"));
+  assert.ok(!read.files.some((file) => file.path === "cordis-signature.json"));
   assert.ok(signPackage(authored, "author", author.privateKey).equals(authored));
 });
 
@@ -49,18 +49,18 @@ test("a signature does not survive a change to the package", () => {
   const signed = readPackage(signPackage(packFiles(files()).zip, "author", author.privateKey));
   const changed = files().map((file) => (file.path === "dist/host.js" ? { ...file, data: Buffer.from("steal();\n") } : file));
   const signatureData = Buffer.from(JSON.stringify(signed.signatures));
-  const tampered = packFiles([...changed, { path: "fuyu-signature.json", data: signatureData }]).zip;
+  const tampered = packFiles([...changed, { path: "cordis-signature.json", data: signatureData }]).zip;
   const result = verifyPackage(tampered, trusted);
   assert.equal(result.author, null);
   assert.match(result.problems[0], /does not match/);
   const forged = { ...signed.signatures, digest: packFiles(changed).digest };
-  const forgedZip = packFiles([...changed, { path: "fuyu-signature.json", data: Buffer.from(JSON.stringify(forged)) }]).zip;
+  const forgedZip = packFiles([...changed, { path: "cordis-signature.json", data: Buffer.from(JSON.stringify(forged)) }]).zip;
   assert.equal(verifyPackage(forgedZip, trusted).author, null);
 });
 
 test("the signed text has a domain prefix and role, so roles and namespaces do not mix", () => {
   const subject = { role: "author", name: "@someone/x", version: "1.0.0", digest: "a".repeat(64) };
-  assert.equal(signatureText(subject), `fuyu-package-signature/1\nauthor\n@someone/x\n1.0.0\n${"a".repeat(64)}`);
+  assert.equal(signatureText(subject), `cordis-package-signature/1\nauthor\n@someone/x\n1.0.0\n${"a".repeat(64)}`);
   const entry = signDigest(subject, author.privateKey);
   assert.equal(verifyDigestSignature(entry, subject, [author]), author.keyId);
   assert.equal(verifyDigestSignature({ ...entry, role: "market" }, { ...subject, role: "market" }, [author]), null);

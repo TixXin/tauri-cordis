@@ -5,8 +5,9 @@ import Fs from "../../vendor/cordis/fs/lib/index.js";
 import NodeFs from "../../vendor/cordis/fs-node/lib/index.js";
 import Loader from "../../vendor/cordis/loader/lib/index.js";
 import { Context } from "../../vendor/cordis/core/lib/index.js";
+import { APP_HOST_EXTENSIONS } from "../app/host.mjs";
 import { HOST_SHARED_MODULES } from "../protocol.mjs";
-import { builtinMounts, readBuiltins } from "./builtins.mjs";
+import { builtinMounts, essentialServices, readBuiltins } from "./builtins.mjs";
 import { Clients } from "./clients.mjs";
 import { Commands } from "./commands.mjs";
 import { DATA_DIR, installDataDir } from "./data.mjs";
@@ -15,7 +16,9 @@ import { ControlledHttp } from "./http.mjs";
 import { recordLogs } from "./logs.mjs";
 import { PluginConfig } from "./plugin-config.mjs";
 import { DEV_WATCHED, watchBuiltins } from "./reload.mjs";
+import { HostLocale } from "./locale.mjs";
 import { RustBridge } from "./rust.mjs";
+import { PluginSecrets } from "./secrets.mjs";
 import { Services } from "./services.mjs";
 import { shareModules } from "./share.mjs";
 import { DEV_PREFIX, SOURCE } from "./sources.mjs";
@@ -25,12 +28,9 @@ import { Usage } from "./usage.mjs";
 import { PluginWindows } from "./windows.mjs";
 
 const API = new URL("../index.mjs", import.meta.url).href;
-const SHARED_FILES = {
-  "tauri-cordis/services": new URL("../services.mjs", import.meta.url).href,
-  cordis: new URL("../../vendor/cordis/core/lib/index.js", import.meta.url).href,
-};
+const SHARED_FILES = { "tauri-cordis/services": new URL("../services.mjs", import.meta.url).href };
 export const PLUGINS_FILE = new URL("./plugins-file.mjs", import.meta.url).href;
-export const HMR = new URL("../../vendor/cordis/hmr/lib/index.js", import.meta.url).href;
+export const HMR = import.meta.resolve("../../vendor/cordis/hmr/lib/index.js");
 const REREAD_AFTER_MS = [50, 400];
 const ACTIVE = 2;
 
@@ -66,7 +66,7 @@ function hostInfo(startedAt, safe, dev) {
   return { pid: process.pid, node: process.versions.node, startedAt, safe, dev, rssBytes: memory.rss, heapUsedBytes: memory.heapUsed, cpuMs: Math.round((cpu.user + cpu.system) / 1000) };
 }
 
-export async function startHost({ dir, config = "plugins.yml", builtins = null, dataDir = null, appVersion = null, apiNames = [], watch = false, dev = false, safe = null, bisect = [], faultLimit, onLog, rpc = null, fetchImpl = globalThis.fetch } = {}) {
+export async function startHost({ dir, config = "plugins.yml", builtins = null, dataDir = null, appVersion = null, locale = "zh-CN", apiNames = [], extensions = APP_HOST_EXTENSIONS, watch = false, dev = false, safe = null, bisect = [], faultLimit, onLog, rpc = null, fetchImpl = globalThis.fetch } = {}) {
   if (!dir) throw new Error("startHost needs the directory that holds the plugin configuration");
   const startedAt = Date.now();
   const catalog = builtins ? readBuiltins(builtins) : null;
@@ -84,7 +84,7 @@ export async function startHost({ dir, config = "plugins.yml", builtins = null, 
   const dataRoot = dataDir ?? join(dir, DATA_DIR);
   installDataDir(ctx, dataRoot);
   await ctx.plugin(Clients, { root: dir, mounts: builtinMounts(catalog) });
-  const services = new Services();
+  const services = new Services({ essential: essentialServices(catalog?.plugins) });
   services.install(ctx);
   const rust = new RustBridge(usage);
   rust.install(ctx);
@@ -94,6 +94,18 @@ export async function startHost({ dir, config = "plugins.yml", builtins = null, 
   if (rpc) commands.attach(rpc);
   const pluginConfig = new PluginConfig({ dataRoot, services, usage });
   pluginConfig.install(ctx);
+  const secrets = new PluginSecrets({ services });
+  secrets.install(ctx);
+  if (rpc) secrets.attach(rpc);
+  const added = extensions.map((extension) => {
+    const instance = extension.create({ dir, dataRoot, services, usage });
+    instance.install?.(ctx);
+    if (rpc) instance.attach?.(rpc);
+    return [extension.name, instance];
+  });
+  const instances = added.map(([, instance]) => instance);
+  const hostLocale = new HostLocale(locale);
+  hostLocale.install(ctx);
   const http = new ControlledHttp({ fetchImpl });
   http.install(ctx);
   const windows = new PluginWindows({ dir, services, usage });
@@ -116,9 +128,15 @@ export async function startHost({ dir, config = "plugins.yml", builtins = null, 
     usage: report,
     services: () => services.list(),
     clients: () => ctx.clients.list(),
+    unreachableClients: () => ctx.clients.unreachable(),
     undeclaredCommands: (plugin) => commands.undeclaredOf(plugin),
     undeclaredNetwork: (plugin) => http.undeclaredOf(plugin),
+    statusExtra: (plugin, state) => {
+      const parts = instances.map((instance) => instance.statusOf?.(plugin, state)).filter(Boolean);
+      return parts.length > 0 ? Object.assign({}, ...parts) : null;
+    },
     subscribe: (listener) => [
+      ...instances.filter((instance) => typeof instance.watch === "function").map((instance) => instance.watch(listener)),
       services.watch(listener),
       ctx.clients.watch(listener),
       commands.watch(listener),
@@ -135,10 +153,14 @@ export async function startHost({ dir, config = "plugins.yml", builtins = null, 
     fault: (plugin, error) => gate.fault(plugin, error),
     bisect: (off) => gate.bisect(off),
     clients: (window) => ctx.clients.list(window),
+    clientRoots: (entries) => ctx.clients.roots(entries),
     timers: () => timers.counts(),
     rustListeners: () => rust.counts(),
     watchClients: (onChange) => ctx.clients.watch(onChange),
     serviceHub: services,
+    ...Object.fromEntries(added),
+    extensions: instances,
+    locale: hostLocale,
     services: () => services.list(),
     watchServices: (onChange) => services.watch(onChange),
     settle: () => Promise.all(ctx.loader.getTasks()),

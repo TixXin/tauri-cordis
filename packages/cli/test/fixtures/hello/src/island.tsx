@@ -13,9 +13,9 @@ export default function apply(ctx: any) {
       };
     }, []);
     return (
-      <div className="fuyu-hello" data-plugin="hello">
-        <span className="fuyu-hello__greeting">{greeting || "…"}</span>
-        <span className="fuyu-hello__count">{count === null ? "" : `#${count}`}</span>
+      <div className="cordis-hello" data-plugin="hello">
+        <span className="cordis-hello__greeting">{greeting || "…"}</span>
+        <span className="cordis-hello__count">{count === null ? "" : `#${count}`}</span>
       </div>
     );
   }

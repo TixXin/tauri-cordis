@@ -8,7 +8,7 @@ import { REVIEW_FIXTURES, capture, copyFixture, editJson, tempDir, writeFiles } 
 test("help, version and bad arguments", async () => {
   const help = capture(tempDir());
   assert.equal(await run(["help"], help.io), 0);
-  assert.match(help.stdout(), /Usage: fuyu-plugin <command>/);
+  assert.match(help.stdout(), /Usage: tauri-cordis-plugin <command>/);
   const version = capture(tempDir());
   assert.equal(await run(["version"], version.io), 0);
   assert.equal(version.stdout(), `${VERSION}\n`);
@@ -29,12 +29,12 @@ test("build and pack from the plugin folder, with build settings from a file", a
   writeFileSync(join(dir, "market.json"), '{ "packageDepth": true }\n');
   const built = capture(dir);
   assert.equal(await run(["build", "--config", "market.json"], built.io), 0);
-  assert.match(built.stdout(), /built @someone\/fuyu-hello 1\.0\.0 into build[/\\]package/);
+  assert.match(built.stdout(), /built @someone\/cordis-hello 1\.0\.0 into build[/\\]package/);
   assert.match(built.stdout(), /nodeApis: os/);
   assert.match(readFileSync(join(dir, "build", "package", "dist", "island.js"), "utf8"), /from "\.\.\/\.\.\/\.\.\/\.\.\/__shared\/react\.js"/);
   const packed = capture(dir);
-  assert.equal(await run(["pack", "--out", "out/hello.fuyu"], packed.io), 0);
-  assert.ok(existsSync(join(dir, "out", "hello.fuyu")));
+  assert.equal(await run(["pack", "--out", "out/hello.cordis"], packed.io), 0);
+  assert.ok(existsSync(join(dir, "out", "hello.cordis")));
   assert.match(packed.stdout(), /digest: [0-9a-f]{64}/);
 });
 
@@ -54,7 +54,7 @@ test("check passes hello, and reports what the market would refuse", async () =>
     writeFiles(root, {
       "src/host.ts": `import { exec } from "node:child_process";\n${readFileSync(join(root, "src/host.ts"), "utf8")}\nexport const run = () => exec("curl https://collect.weather-stats.net");\nconst _0x1a2b = ["a"]; const _0x3c4d = _0x1a2b; const _0x5e6f = _0x3c4d; export { _0x5e6f };\n`,
     });
-    editJson(join(root, "package.json"), (pkg) => (pkg.fuyu.experimental = ["timers/v1"]));
+    editJson(join(root, "package.json"), (pkg) => (pkg.cordis.experimental = ["timers/v1"]));
   });
   const result = await check(dir, { allowExperimental: false });
   assert.equal(result.ok, false);
@@ -69,7 +69,7 @@ test("check passes hello, and reports what the market would refuse", async () =>
   assert.equal(JSON.parse(json.stdout()).ok, false);
 });
 
-const experimental = () => copyFixture("hello", (root) => editJson(join(root, "package.json"), (pkg) => (pkg.fuyu.experimental = ["timers/v1"])));
+const experimental = () => copyFixture("hello", (root) => editJson(join(root, "package.json"), (pkg) => (pkg.cordis.experimental = ["timers/v1"])));
 
 test("check without --market lets a plugin under development use experimental interfaces", async () => {
   const dir = experimental();
@@ -86,20 +86,20 @@ test("check --market still refuses experimental interfaces, from the manifest an
   const { ok, errors } = JSON.parse(out.stdout());
   assert.equal(ok, false);
   assert.ok(errors.some((issue) => issue.code === "experimental"), JSON.stringify(errors));
-  assert.ok(errors.some((issue) => issue.code === "review:manifest" && issue.message.includes("fuyu.experimental")), JSON.stringify(errors));
+  assert.ok(errors.some((issue) => issue.code === "review:manifest" && issue.message.includes("cordis.experimental")), JSON.stringify(errors));
 });
 
 test("check rejects unknown slot names, allows experimental slots in dev mode, and refuses them under --market", async () => {
   const typoDir = copyFixture("hello", (root) => {
     editJson(join(root, "package.json"), (pkg) => {
-      pkg.fuyu.slots = ["island.dev/v1", "island.nonexistent/v1"];
+      pkg.cordis.slots = ["island.dev/v1", "island.nonexistent/v1"];
     });
   });
   const typoResult = await check(typoDir);
   assert.equal(typoResult.ok, false);
   const slotError = typoResult.errors.find((issue) => issue.code === "unknown-slot");
   assert.ok(slotError, JSON.stringify(typoResult.errors));
-  assert.equal(slotError.path, "fuyu.slots[1]");
+  assert.equal(slotError.path, "cordis.slots[1]");
   assert.match(slotError.message, /island\.nonexistent\/v1/);
   assert.match(slotError.message, /island\.page\/v1/);
 
@@ -108,8 +108,8 @@ test("check rejects unknown slot names, allows experimental slots in dev mode, a
       "src/island.tsx": readFileSync(join(root, "src/island.tsx"), "utf8").replace("island.dev/v1", "island.future/v1"),
     });
     editJson(join(root, "package.json"), (pkg) => {
-      pkg.fuyu.slots = ["island.future/v1"];
-      pkg.fuyu.experimental = ["island.future/v1"];
+      pkg.cordis.slots = ["island.future/v1"];
+      pkg.cordis.experimental = ["island.future/v1"];
     });
   });
   const devResult = await check(expSlotDir);
@@ -120,17 +120,17 @@ test("check rejects unknown slot names, allows experimental slots in dev mode, a
   assert.equal(await run(["check", "--market", "--json"], marketOut.io), 1);
   const marketJson = JSON.parse(marketOut.stdout());
   assert.equal(marketJson.ok, false);
-  assert.ok(marketJson.errors.some((issue) => issue.code === "unknown-slot" && issue.path === "fuyu.slots[0]"), JSON.stringify(marketJson.errors));
+  assert.ok(marketJson.errors.some((issue) => issue.code === "unknown-slot" && issue.path === "cordis.slots[0]"), JSON.stringify(marketJson.errors));
   assert.ok(marketJson.errors.some((issue) => issue.code === "experimental"), JSON.stringify(marketJson.errors));
 });
 
 test("check validates service names in provides, replaces and inject while allowing custom versioned services and seams", async () => {
   const validCustom = copyFixture("hello", (root) => {
     editJson(join(root, "package.json"), (pkg) => {
-      pkg.fuyu.provides = ["weather/v1", "weather.forecast/v2"];
-      pkg.fuyu.replaces = ["lyrics/v1"];
-      pkg.fuyu.inject = {
-        required: ["clients", "commands", "config", "http", "translator.engines", "weather/v1"],
+      pkg.cordis.provides = ["weather/v1", "weather.forecast/v2"];
+      pkg.cordis.replaces = ["lyrics/v1"];
+      pkg.cordis.inject = {
+        required: ["clients", "commands", "config", "http", "island", "settings", "translator.engines", "weather/v1"],
         optional: ["reminders/v1", "clipboard.actions"],
       };
     });
@@ -140,9 +140,9 @@ test("check validates service names in provides, replaces and inject while allow
 
   const badServices = copyFixture("hello", (root) => {
     editJson(join(root, "package.json"), (pkg) => {
-      pkg.fuyu.provides = ["weather"];
-      pkg.fuyu.replaces = ["Translator/v1"];
-      pkg.fuyu.inject = {
+      pkg.cordis.provides = ["weather"];
+      pkg.cordis.replaces = ["Translator/v1"];
+      pkg.cordis.inject = {
         required: ["clients", "timers/v0"],
         optional: ["translator.engine"],
       };
@@ -152,10 +152,10 @@ test("check validates service names in provides, replaces and inject while allow
   assert.equal(badResult.ok, false);
   const serviceErrors = badResult.errors.filter((issue) => issue.code === "service-name").map((issue) => issue.path);
   assert.deepEqual(serviceErrors, [
-    "fuyu.provides[0]",
-    "fuyu.replaces[0]",
-    "fuyu.inject.required[1]",
-    "fuyu.inject.optional[0]",
+    "cordis.provides[0]",
+    "cordis.replaces[0]",
+    "cordis.inject.required[1]",
+    "cordis.inject.optional[0]",
   ]);
 });
 
@@ -177,9 +177,9 @@ test("dev builds the plugin, registers source: dev in plugins.yml, rebuilds on c
   const dataDir = tempDir();
   const out = capture(dir);
   assert.equal(await run(["dev", "--once", "--data-dir", dataDir], out.io), 0, out.stderr());
-  assert.match(out.stdout(), /dev @someone\/fuyu-hello/);
+  assert.match(out.stdout(), /dev @someone\/cordis-hello/);
   const yml = readFileSync(join(dataDir, "plugins.yml"), "utf8");
-  assert.match(yml, /- id: "@someone\/fuyu-hello"/);
+  assert.match(yml, /- id: "@someone\/cordis-hello"/);
   assert.match(yml, /source: dev/);
 
   let rebuilt = 0;
@@ -202,23 +202,23 @@ test("check requires experimental windows/v1 for plugin-window.view/v1 slot and 
       "src/island.tsx": readFileSync(join(root, "src/island.tsx"), "utf8").replace("island.dev/v1", "plugin-window.view/v1"),
     });
     editJson(join(root, "package.json"), (pkg) => {
-      pkg.fuyu.slots = ["plugin-window.view/v1"];
-      pkg.fuyu.inject = { required: ["windows"] };
+      pkg.cordis.slots = ["plugin-window.view/v1"];
+      pkg.cordis.inject = { required: ["windows"] };
     });
   });
   const missingRes = await check(missingExp);
   assert.equal(missingRes.ok, false);
-  assert.ok(missingRes.errors.some((issue) => issue.path === "fuyu.slots[0]" && issue.code === "experimental"));
-  assert.ok(missingRes.errors.some((issue) => issue.path === "fuyu.inject.required[0]" && issue.code === "experimental"));
+  assert.ok(missingRes.errors.some((issue) => issue.path === "cordis.slots[0]" && issue.code === "experimental"));
+  assert.ok(missingRes.errors.some((issue) => issue.path === "cordis.inject.required[0]" && issue.code === "experimental"));
 
   const withExp = copyFixture("hello", (root) => {
     writeFiles(root, {
       "src/island.tsx": readFileSync(join(root, "src/island.tsx"), "utf8").replace("island.dev/v1", "plugin-window.view/v1"),
     });
     editJson(join(root, "package.json"), (pkg) => {
-      pkg.fuyu.slots = ["plugin-window.view/v1"];
-      pkg.fuyu.inject = { required: ["windows"] };
-      pkg.fuyu.experimental = ["windows/v1"];
+      pkg.cordis.slots = ["plugin-window.view/v1"];
+      pkg.cordis.inject = { required: ["windows"] };
+      pkg.cordis.experimental = ["windows/v1"];
     });
   });
   const devRes = await check(withExp);
@@ -228,6 +228,6 @@ test("check requires experimental windows/v1 for plugin-window.view/v1 slot and 
   assert.equal(await run(["check", "--market", "--json"], marketOut.io), 1);
   const marketJson = JSON.parse(marketOut.stdout());
   assert.equal(marketJson.ok, false);
-  assert.ok(marketJson.errors.some((issue) => issue.path === "fuyu.slots[0]" && issue.code === "experimental"));
-  assert.ok(marketJson.errors.some((issue) => issue.path === "fuyu.inject.required[0]" && issue.code === "experimental"));
+  assert.ok(marketJson.errors.some((issue) => issue.path === "cordis.slots[0]" && issue.code === "experimental"));
+  assert.ok(marketJson.errors.some((issue) => issue.path === "cordis.inject.required[0]" && issue.code === "experimental"));
 });

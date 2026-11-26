@@ -1,3 +1,4 @@
+import { checkBundles } from "./bundles.mjs";
 import { isPublicKeyEntry, isSignatureObject } from "./keys.mjs";
 import { isValidRange, isValidVersion } from "./semver.mjs";
 import {
@@ -18,9 +19,12 @@ import {
 export const FORMAT = 3;
 export const PLATFORMS = ["windows", "macos"];
 export const MAX_SCREENSHOTS = 6;
+export const MAX_KEYWORDS = 32;
+export const MAX_DOCS = 16;
+export const DOC_NAME = /^(?:README|CHANGELOG)(?:\.[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*)?\.md$/i;
 export const DEFAULT_MARKET = Object.freeze({
-  officialScope: "fuyu",
-  officialRepository: "https://github.com/TixXin/fuyu",
+  officialScope: "cordis",
+  officialRepository: "https://github.com/TixXin/tauri-cordis",
 });
 
 const NAME = /^@([a-z0-9][a-z0-9-]*)\/([a-z0-9][a-z0-9._-]*)$/;
@@ -69,10 +73,24 @@ function checkManifest(report, manifest, path) {
     });
   }
   if (manifest.categories !== undefined) report.check(isTextArray(manifest.categories), `${path}.categories`, "must be a list of strings");
+  if (manifest.keywords !== undefined) {
+    report.check(isTextArray(manifest.keywords) && manifest.keywords.length <= MAX_KEYWORDS, `${path}.keywords`, `must be a list of at most ${MAX_KEYWORDS} strings`);
+  }
   if (manifest.preview !== undefined) report.check(typeof manifest.preview === "boolean", `${path}.preview`, "must be true or false");
   if (manifest.requires !== undefined) {
     const ok = isObject(manifest.requires) && Object.values(manifest.requires).every(isValidRange);
     report.check(ok, `${path}.requires`, "must map plugin names to version ranges");
+  }
+}
+
+function checkDocs(report, docs, path) {
+  if (!report.check(isObject(docs) && Object.keys(docs).length <= MAX_DOCS, path, `must map at most ${MAX_DOCS} file names to SHA-256`)) return;
+  const seen = new Set();
+  for (const [name, sha256] of Object.entries(docs)) {
+    const lower = name.toLowerCase();
+    report.check(DOC_NAME.test(name) && !seen.has(lower), `${path}.${name}`, "must be a README or CHANGELOG .md file name, listed once");
+    report.check(isHex(sha256, 64), `${path}.${name}`, "must be 64 lowercase hex digits");
+    seen.add(lower);
   }
 }
 
@@ -89,7 +107,7 @@ function checkVersion(report, entry, path, plugin, options) {
     }
   }
   report.check(isHex(entry.commit, 40), `${path}.commit`, "must be a full 40-digit commit id");
-  report.check(isObject(entry.engines) && isValidRange(entry.engines.fuyu) && entry.engines.fuyu.trim() !== "", `${path}.engines.fuyu`, "must be a version range");
+  report.check(isObject(entry.engines) && isValidRange(entry.engines.cordis) && entry.engines.cordis.trim() !== "", `${path}.engines.cordis`, "must be a version range");
   const platforms = entry.platforms;
   const platformsOk = Array.isArray(platforms) && platforms.length > 0 && platforms.every((p) => PLATFORMS.includes(p)) && new Set(platforms).size === platforms.length;
   report.check(platformsOk, `${path}.platforms`, `must list some of ${PLATFORMS.join(", ")}`);
@@ -115,6 +133,7 @@ function checkVersion(report, entry, path, plugin, options) {
       list.forEach((shot, i) => checkAsset(report, shot, `${path}.screenshots[${i}]`));
     }
   }
+  if (entry.docs !== undefined) checkDocs(report, entry.docs, `${path}.docs`);
 }
 
 function checkPublisher(report, publisher, path, scope, options) {
@@ -152,5 +171,6 @@ export function validateIndex(doc, options = {}) {
   if (!report.check(Array.isArray(doc.plugins), "plugins", "must be a list")) return report.list;
   doc.plugins.forEach((plugin, i) => checkPlugin(report, plugin, `plugins[${i}]`, settings));
   checkUnique(report, doc.plugins, (plugin) => plugin?.name, "plugins", "name");
+  checkBundles(report, doc, parseName);
   return report.list;
 }

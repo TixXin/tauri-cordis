@@ -3,6 +3,7 @@ import { SERVICE_NAME, SLOTS } from "tauri-cordis/protocol";
 import { review } from "@tauri-cordis/review";
 import { build, readManifest } from "./build.mjs";
 import { BuildError } from "./errors.mjs";
+import { lintListing } from "./lint.mjs";
 import { createScratch, snapshotDirectory } from "./sources.mjs";
 
 const KNOWN_SLOTS = Object.freeze(Object.keys(SLOTS));
@@ -11,6 +12,8 @@ const KNOWN_INJECT = Object.freeze([
   "commands",
   "config",
   "http",
+  "island",
+  "settings",
   "windows",
   "translator.engines",
   "lyrics.sources",
@@ -23,7 +26,7 @@ const KNOWN_INJECT = Object.freeze([
 const KNOWN_INJECT_SET = new Set(KNOWN_INJECT);
 
 function isExperimental(finding) {
-  return finding.check === "manifest" && finding.file === "package.json" && finding.message.includes("fuyu.experimental");
+  return finding.check === "manifest" && finding.file === "package.json" && finding.message.includes("cordis.experimental");
 }
 
 function fromFinding(finding) {
@@ -113,11 +116,11 @@ function checkInterfaces(pkg, appKey, allowExperimental) {
 
 export async function check(dir, options = {}) {
   const root = resolve(dir);
-  const appKey = options.appKey ?? "fuyu";
+  const appKey = options.appKey ?? "cordis";
   const allowExperimental = options.allowExperimental ?? true;
   const errors = [];
   const warnings = [];
-  const scratch = createScratch("fuyu-plugin-check-");
+  const scratch = createScratch("tauri-cordis-plugin-check-");
   try {
     let built = null;
     let manifest = null;
@@ -130,7 +133,10 @@ export async function check(dir, options = {}) {
       if (!(error instanceof BuildError)) throw error;
       errors.push({ code: "build", message: error.message }, ...error.issues);
     }
-    errors.push(...checkInterfaces(manifest ?? safeReadManifest(root), appKey, allowExperimental));
+    const source = manifest ?? safeReadManifest(root);
+    errors.push(...checkInterfaces(source, appKey, allowExperimental));
+    const listing = options.listing ?? "off";
+    if (listing !== "off") (listing === "error" ? errors : warnings).push(...lintListing(root, source, { appKey }));
     const report = review({ newDir: snapshotDirectory(root, scratch.dir("source")), newBuilt: built });
     const listed = new Set(report.summary.dependencies.added.map((item) => `${item.name}@${item.versions.join(", ")}`));
     const domains = new Set(warnings.filter((issue) => issue.code === "undeclared-domain").map((issue) => issue.domain));

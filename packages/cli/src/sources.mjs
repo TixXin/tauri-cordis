@@ -16,13 +16,13 @@ function isDirectory(path) {
 
 function builtBy(dir) {
   try {
-    return typeof JSON.parse(readFileSync(join(dir, "package.json"), "utf8"))?.fuyu?.builtWith === "string";
+    return typeof JSON.parse(readFileSync(join(dir, "package.json"), "utf8"))?.cordis?.builtWith === "string";
   } catch {
     return false;
   }
 }
 
-export function createScratch(prefix = "fuyu-plugin-") {
+export function createScratch(prefix = "tauri-cordis-plugin-") {
   const root = mkdtempSync(join(tmpdir(), prefix));
   let next = 0;
   return {

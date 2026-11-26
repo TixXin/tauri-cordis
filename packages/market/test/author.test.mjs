@@ -8,7 +8,7 @@ const repository = "https://github.com/someone/weather";
 const fields = { name, version: "1.0.0", repository, commit: commitOf(1) };
 
 test("the signed commit text is the domain, name, version, repository and commit on separate lines", () => {
-  assert.equal(commitText(fields), `fuyu-plugin-commit/1\n${name}\n1.0.0\n${repository}\n${commitOf(1)}`);
+  assert.equal(commitText(fields), `tauri-cordis-plugin-commit/1\n${name}\n1.0.0\n${repository}\n${commitOf(1)}`);
   assert.throws(() => commitText({ ...fields, version: "1.0.0\nevil" }));
   assert.throws(() => commitText({ ...fields, commit: "" }));
 });
@@ -102,10 +102,10 @@ test("a missing or forged signature blocks the install", () => {
 
 test("official plugins are pinned by repository only", () => {
   const p = {
-    name: "@fuyu/countdown",
+    name: "@cordis/countdown",
     publisher: { github: "TixXin", official: true },
     authorKeys: [],
-    versions: [version("@fuyu/countdown", null, { repository: "https://github.com/TixXin/fuyu", sign: false })],
+    versions: [version("@cordis/countdown", null, { repository: "https://github.com/TixXin/tauri-cordis", sign: false })],
   };
   const first = checkAuthor({ plugin: p, entry: p.versions[0] });
   assert.equal(first.status, "official");

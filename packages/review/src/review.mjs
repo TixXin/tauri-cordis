@@ -2,7 +2,7 @@ import { LOCKFILES, lineDelta } from "./files.mjs";
 import { diffLockfiles } from "./lockfile.mjs";
 import { emptyVersion, scanVersion } from "./version.mjs";
 
-export const FORMAT = "fuyu-plugin-review/1";
+export const FORMAT = "tauri-cordis-plugin-review/1";
 export const LINE_THRESHOLD = 300;
 const TIER_ORDER = { red: 0, yellow: 1, info: 2 };
 
@@ -17,7 +17,7 @@ const SENSITIVE_LABELS = {
   "home-dir": "用户主目录、临时目录或系统环境变量里的路径",
   "absolute-path": "绝对路径",
   "parent-path": "带 .. 的路径",
-  "app-data": "浮屿或别的插件的数据目录",
+  "app-data": "宿主应用或别的插件的数据目录",
   "dynamic-url": "运行时拼出来的网址",
 };
 const OBFUSCATION_LABELS = {
@@ -141,14 +141,14 @@ export function compareVersions(previous, next) {
   if (next.manifestError) add("red", "manifest", "读不到 package.json", { file: "package.json", detail: next.manifestError });
 
   const facts = next.facts;
-  if (facts.experimental.length) add("red", "manifest", "用了实验接口（fuyu.experimental 不为空），市场不收", { file: "package.json", detail: facts.experimental.join(", ") });
+  if (facts.experimental.length) add("red", "manifest", "用了实验接口（cordis.experimental 不为空），市场不收", { file: "package.json", detail: facts.experimental.join(", ") });
   for (const field of ["provides", "replaces"]) {
     const diff = setDiff(base.facts[field], facts[field]);
-    for (const item of diff.added) add("yellow", "manifest", `fuyu.${field} 新增`, { file: "package.json", detail: item });
-    for (const item of diff.removed) add("yellow", "manifest", `fuyu.${field} 删除`, { file: "package.json", detail: item });
+    for (const item of diff.added) add("yellow", "manifest", `cordis.${field} 新增`, { file: "package.json", detail: item });
+    for (const item of diff.removed) add("yellow", "manifest", `cordis.${field} 删除`, { file: "package.json", detail: item });
   }
   const networkDiff = setDiff(base.facts.network, facts.network);
-  for (const host of networkDiff.added) add("yellow", "network", "fuyu.network 新声明的域名", { file: "package.json", detail: host });
+  for (const host of networkDiff.added) add("yellow", "network", "cordis.network 新声明的域名", { file: "package.json", detail: host });
 
   const modules = setDiff(base.modules.keys(), next.modules.keys());
   for (const name of modules.added) {
@@ -157,7 +157,7 @@ export function compareVersions(previous, next) {
   }
   if (facts.nodeApis) {
     const undeclared = [...next.modules.keys()].filter((name) => !facts.nodeApis.includes(name)).sort();
-    if (undeclared.length) add("yellow", "nodeApis", "代码用到的 Node 模块不在清单的 fuyu.nodeApis 里", { file: "package.json", detail: undeclared.join(", ") });
+    if (undeclared.length) add("yellow", "nodeApis", "代码用到的 Node 模块不在清单的 cordis.nodeApis 里", { file: "package.json", detail: undeclared.join(", ") });
   }
 
   const undeclaredDomains = [];
@@ -167,7 +167,7 @@ export function compareVersions(previous, next) {
     if (!declared) undeclaredDomains.push(host);
     if (!isNew && declared) continue;
     const hidden = locations.some((l) => l.concatenated);
-    const parts = [isNew ? "新出现的域名" : "域名", declared ? null : "没在 fuyu.network 里声明", hidden ? "由字符串拼接得到" : null].filter(Boolean);
+    const parts = [isNew ? "新出现的域名" : "域名", declared ? null : "没在 cordis.network 里声明", hidden ? "由字符串拼接得到" : null].filter(Boolean);
     add("yellow", "network", parts.join("，"), { detail: host, file: locations[0].file, line: locations[0].line, locations: where(locations) });
   }
 

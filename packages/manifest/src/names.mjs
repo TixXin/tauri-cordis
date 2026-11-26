@@ -34,7 +34,7 @@ export function parseRepository(repository) {
   return { host: url.hostname.toLowerCase(), owner, repo };
 }
 
-export function checkPluginName(name, repository, { officialScope = "fuyu", official = false } = {}) {
+export function checkPluginName(name, repository, { officialScope = "cordis", official = false } = {}) {
   const parsed = parsePluginName(name);
   if (!parsed) return { code: "name", message: `"${name}" is not a valid package name: lowercase letters, digits, "-", "." and "_", optionally scoped` };
   if (!parsed.scope) return { code: "name-unscoped", message: `"${name}" has no scope: name it @<repository owner>/${parsed.name}` };

@@ -1,4 +1,5 @@
 export { SERVICE_NAME } from "@tauri-cordis/manifest/names";
+export { DEFAULT_LOCALE, normalizeLocale, pickLocale } from "./locale.mjs";
 
 export const HOST_PROTOCOL = 2;
 export const WINDOW_PROTOCOL = 1;
@@ -19,16 +20,18 @@ export const SERVICE_TIMEOUT_MS = 30_000;
 export const WINDOW_ORIGINS = ["tauri://localhost", "http://tauri.localhost", "https://tauri.localhost"];
 
 export const SLOT_THEME = [
-  "--fuyu-plugin-text",
-  "--fuyu-plugin-text-secondary",
-  "--fuyu-plugin-text-muted",
-  "--fuyu-plugin-surface",
-  "--fuyu-plugin-surface-hover",
-  "--fuyu-plugin-border",
-  "--fuyu-plugin-accent",
-  "--fuyu-plugin-on-accent",
-  "--fuyu-plugin-font",
-  "--fuyu-plugin-radius",
+  "--tauri-cordis-plugin-text",
+  "--tauri-cordis-plugin-text-secondary",
+  "--tauri-cordis-plugin-text-muted",
+  "--tauri-cordis-plugin-surface",
+  "--tauri-cordis-plugin-surface-hover",
+  "--tauri-cordis-plugin-border",
+  "--tauri-cordis-plugin-accent",
+  "--tauri-cordis-plugin-on-accent",
+  "--tauri-cordis-plugin-warning",
+  "--tauri-cordis-plugin-danger",
+  "--tauri-cordis-plugin-font",
+  "--tauri-cordis-plugin-radius",
 ];
 
 export const SHARED_MODULES = {
@@ -36,13 +39,14 @@ export const SHARED_MODULES = {
   "react/jsx-runtime": "__shared/react-jsx-runtime.js",
 };
 
-export const HOST_SHARED_MODULES = ["tauri-cordis", "fuyu-plugin", "tauri-cordis/services", "cordis"];
+export const HOST_SHARED_MODULES = ["tauri-cordis", "tauri-cordis-plugin", "tauri-cordis/services"];
 
 export const SLOTS = {
-  "island.page/v1": { kind: "list", perPlugin: 2, meta: ["icon", "shortcutOrder", "headerDot", "enabled", "fallback", "fold"] },
+  "island.page/v1": { kind: "list", perPlugin: 2, meta: ["title", "icon", "shortcutOrder", "headerDot", "enabled", "fallback", "fold"] },
   "island.header/v1": { kind: "list", perPlugin: 1, meta: ["enabled"] },
-  "island.collapsed/v1": { kind: "list", perPlugin: 2, meta: ["group", "width", "hideable", "shown"] },
+  "island.collapsed/v1": { kind: "list", perPlugin: 2, meta: ["group", "width", "hideable", "shown", "opens", "label"] },
   "island.collapsed-center/v1": { kind: "single", perPlugin: 1, meta: ["width", "shown"] },
+  "island.widget/v1": { kind: "list", perPlugin: 8, meta: ["sizes", "label", "group", "icon"] },
   "island.alert/v1": { kind: "list", perPlugin: 1, meta: ["trailing", "popup"] },
   "island.notice/v1": { kind: "list", perPlugin: 1, meta: ["active", "actions"] },
   "island.line/v1": { kind: "list", perPlugin: 2, meta: [] },

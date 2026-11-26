@@ -26,7 +26,7 @@ test("packing is deterministic: sorted paths, fixed timestamps, LF text, binary 
   assert.deepEqual(read.files.map((file) => file.path), ["README.md", "assets/icon.png", "dist/host.js", "package.json"]);
   assert.equal(read.files.find((file) => file.path === "dist/host.js").data.toString(), "export default {};\nconsole.log(1);\n");
   assert.deepEqual([...read.files.find((file) => file.path === "assets/icon.png").data], [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x0d, 0x0a]);
-  assert.equal(read.manifest.name, "@someone/fuyu-weather");
+  assert.equal(read.manifest.name, "@someone/cordis-weather");
   assert.equal(read.digest, first.digest);
   assert.equal(read.signatures, null);
 });
@@ -37,7 +37,7 @@ test("the digest covers paths and contents but not the signature file", () => {
   assert.notEqual(packFiles(renamed).digest, base);
   const changed = goodFiles().map((file) => (file.path === "README.md" ? { ...file, data: Buffer.from("# Weather!\n") } : file));
   assert.notEqual(packFiles(changed).digest, base);
-  assert.equal(packageDigest([...goodFiles(), { path: "fuyu-signature.json", data: Buffer.from("{}") }]), packageDigest(goodFiles()));
+  assert.equal(packageDigest([...goodFiles(), { path: "cordis-signature.json", data: Buffer.from("{}") }]), packageDigest(goodFiles()));
   assert.notEqual(packageDigest(goodFiles(), { namespace: "atoll" }), packageDigest(goodFiles()));
 });
 
@@ -139,7 +139,7 @@ test("reading stops zip bombs: total size, file count and lying sizes", () => {
   rejects(() => readPackage(corrupt), "zip");
 });
 
-test("packDirectory packs a folder and refuses symbolic links", () => {
+test("packDirectory packs a folder and refuses symbolic links", (t) => {
   const dir = mkdtempSync(join(tmpdir(), "plugin-manifest-"));
   try {
     mkdirSync(join(dir, "dist"));
@@ -148,7 +148,13 @@ test("packDirectory packs a folder and refuses symbolic links", () => {
     const packed = packDirectory(dir);
     assert.deepEqual(packed.files.map((file) => file.path), ["dist/host.js", "package.json"]);
     assert.equal(packed.files[0].data.toString(), "export default {};\n");
-    symlinkSync(join(dir, "package.json"), join(dir, "dist", "link.json"));
+    try {
+      symlinkSync(join(dir, "package.json"), join(dir, "dist", "link.json"));
+    } catch (error) {
+      if (error.code !== "EPERM") throw error;
+      t.skip("creating symbolic links needs Developer Mode or admin rights");
+      return;
+    }
     rejects(() => packDirectory(dir), "symlink");
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -156,7 +162,7 @@ test("packDirectory packs a folder and refuses symbolic links", () => {
 });
 
 test("package file names use the configurable extension", () => {
-  assert.equal(packageFileName("@someone/fuyu-weather", "1.2.0"), "someone-fuyu-weather-1.2.0.fuyu");
+  assert.equal(packageFileName("@someone/cordis-weather", "1.2.0"), "someone-cordis-weather-1.2.0.cordis");
   assert.equal(packageFileName("@someone/weather", "1.0.0", { namespace: "atoll" }), "someone-weather-1.0.0.atoll");
   assert.equal(packageFileName("@someone/weather", "1.0.0", { extension: ".plugin" }), "someone-weather-1.0.0.plugin");
 });

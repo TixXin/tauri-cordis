@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
-const ALLOWED = [/^node:/, /^ws$/, /^react$/, /^\.\.?\//, /^tauri-cordis(\/|$)/, /^@tauri-cordis\/manifest(\/|$)/];
+const ALLOWED = [/^node:/, /^cordis$/, /^@cordisjs\//, /^ws$/, /^react$/, /^\.\.?\//, /^tauri-cordis(\/|$)/, /^@tauri-cordis\/manifest(\/|$)/];
 
 function files(dir) {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {

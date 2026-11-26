@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, test } from "node:test";
@@ -23,7 +23,7 @@ function tempDir() {
   return dir;
 }
 
-function makeBuiltPackage({ name = "@ann/hello", version = "1.0.0", replaces = [] } = {}) {
+function makeBuiltPackage({ name = "@ann/hello", version = "1.0.0", replaces = [], engines = ">=0.4.0 <1.0.0" } = {}) {
   const manifest = {
     name,
     version,
@@ -32,8 +32,8 @@ function makeBuiltPackage({ name = "@ann/hello", version = "1.0.0", replaces = [
     license: "MIT",
     author: "ann",
     repository: "github:ann/hello",
-    engines: { fuyu: ">=0.4.0 <1.0.0" },
-    fuyu: {
+    engines: { cordis: engines },
+    cordis: {
       manifest: 1,
       displayName: { "zh-CN": "你好", en: "Hello" },
       description: { "zh-CN": "示例插件", en: "Demo plugin" },
@@ -59,6 +59,16 @@ test("manual installation is refused by default and allowed when allowManual is 
   assert.equal(inspected.id, "@ann/hello");
   assert.equal(inspected.confirmation.unreviewed, true);
   assert.deepEqual(inspected.confirmation.nodeApis, ["os"]);
+});
+
+test("a beta app build installs a package whose engine range is older", () => {
+  const { zip } = makeBuiltPackage({ engines: ">=0.3.10" });
+  const inspected = inspectPackage(zip, { source: "manual", allowManual: true, appVersion: "0.3.11-beta.4" });
+  assert.equal(inspected.id, "@ann/hello");
+  assert.throws(
+    () => inspectPackage(zip, { source: "manual", allowManual: true, appVersion: "0.3.10-beta.1" }),
+    { code: "bad-manifest" },
+  );
 });
 
 test("installPackage unpacks into packages/<scope>/<name>, writes plugins.yml, and uninstallPackage removes it", () => {
@@ -111,4 +121,55 @@ test("revocations block installing a disabled version and disable already instal
   assert.deepEqual(applied.disabled, ["@ann/hello"]);
   assert.ok(existsSync(join(installed.root, "package.json")));
   assert.match(readFileSync(join(dir, "plugins.yml"), "utf8"), /disabled: true/);
+});
+
+test("package names whose scope or name is only dots are refused before any path is built", async () => {
+  const { isPackageId } = await import("../src/installer.mjs");
+  for (const id of ["@x/..", "@x/.", "@x/...", "@../x", "@./x", "@x/../y", "@x", "x/y", "", null, 7]) {
+    assert.equal(isPackageId(id), false, String(id));
+  }
+  for (const id of ["@ann/hello", "@ann/hello.world", "@ann/.hidden", "@ann/a..b"]) assert.equal(isPackageId(id), true, id);
+
+  const dir = tempDir();
+  const installed = installPackage(makeBuiltPackage().zip, { dir, source: "market" });
+  mkdirSync(join(dir, "data", "@x"), { recursive: true });
+  writeFileSync(join(dir, "data", "@x", "keep.json"), "{}");
+  for (const id of ["@x/..", "@x/.", "@../x", "@./x"]) {
+    assert.throws(() => uninstallPackage(dir, id, { removeData: true }), { code: "bad-name" }, id);
+  }
+  assert.ok(existsSync(join(installed.root, "package.json")));
+  assert.ok(existsSync(join(dir, "data", "@x", "keep.json")));
+
+  const merged = mergeRevoked(emptyRevocations(), {
+    format: 3,
+    serial: 1,
+    generatedAt: "2026-11-01T00:00:00Z",
+    expires: "2099-01-01T00:00:00Z",
+    entries: [{ id: "rev-dots", name: "@x/..", version: "1.0.0", level: "disable", reason: { en: "x" } }],
+    withdrawn: [],
+  });
+  assert.ok(merged.ok);
+  const applied = applyRevocationsToDir(dir, merged.state, { installed: [{ id: "@x/..", version: "1.0.0", source: "market" }] });
+  assert.deepEqual(applied.disabled, []);
+  assert.doesNotMatch(readFileSync(join(dir, "plugins.yml"), "utf8"), /@x\/\.\./);
+});
+
+test("dev --clean drops only its own entry, through the same code the host uses", async () => {
+  const { registerDevEntry, unregisterDevEntry } = await import("../src/dev.mjs");
+  const { removeInstalledFromYml, writeInstalledToYml } = await import("../src/installer.mjs");
+  const dir = tempDir();
+  const yml = join(dir, "plugins.yml");
+  const seed = () => {
+    writeFileSync(yml, "[]\n");
+    writeInstalledToYml(yml, { id: "@ann/clock", source: "market", replaces: ["clock/v1"] });
+    registerDevEntry(yml, "hello", join(dir, "hello", "dist"));
+    writeInstalledToYml(yml, { id: "@ann/notes", source: "manual", disabled: true });
+  };
+  seed();
+  assert.equal(unregisterDevEntry(yml, "hello"), true);
+  const viaCli = readFileSync(yml, "utf8");
+  assert.equal(viaCli, '- id: "@ann/clock"\n  source: market\n  replaces:\n    - "clock/v1"\n- id: "@ann/notes"\n  source: manual\n  disabled: true\n');
+  seed();
+  removeInstalledFromYml(yml, "hello");
+  assert.equal(readFileSync(yml, "utf8"), viaCli);
 });

@@ -22,7 +22,7 @@ function checkExperimental(ctx) {
   if (!meta || meta.source === "builtin") return;
   const exp = meta.declared?.experimental ?? [];
   if (exp.includes("windows/v1") || exp.includes("windows")) return;
-  throw Object.assign(new Error('ctx.windows requires fuyu.experimental to include "windows/v1"'), {
+  throw Object.assign(new Error('ctx.windows requires cordis.experimental to include "windows/v1"'), {
     code: "experimental-required",
   });
 }
@@ -169,18 +169,20 @@ export class PluginWindows {
     }, `ctx.windows.create(${id})`);
     record.stopEffect = stopEffect;
     await this.callRpc("pluginKernel.windowOpen", {
-      pluginId: owner,
-      windowId: id,
-      title: state.title,
-      kind: state.kind,
-      width: state.width,
-      height: state.height,
-      x: state.x,
-      y: state.y,
-      alwaysOnTop: state.alwaysOnTop,
-      clickThrough: state.clickThrough,
-      resizable: state.resizable,
-      visible: state.visible,
+      spec: {
+        pluginId: owner,
+        windowId: id,
+        title: state.title,
+        kind: state.kind,
+        width: state.width,
+        height: state.height,
+        x: state.x,
+        y: state.y,
+        alwaysOnTop: state.alwaysOnTop,
+        clickThrough: state.clickThrough,
+        resizable: state.resizable,
+        visible: state.visible,
+      },
     });
     this.emitChanged();
     return { ...state };

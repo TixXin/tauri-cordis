@@ -60,3 +60,27 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - run: pnpm install --frozen-lockfile
       - run: pnpm run check:pack
+
+  export:
+    name: Matches Fuyu's export
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: source
+        run: |
+          echo "repository=$(jq -r .repository .fuyu-export.json)" >> "$GITHUB_OUTPUT"
+          echo "ref=$(jq -r .fuyu .fuyu-export.json)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ steps.source.outputs.repository }}
+          ref: ${{ steps.source.outputs.ref }}
+          path: .fuyu
+          sparse-checkout: |
+            scripts/cordis
+            packages
+            src-tauri/crates
+            vendor/cordis
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+      - run: node .fuyu/scripts/cordis/export.mjs check --cordis "$GITHUB_WORKSPACE" --verbose

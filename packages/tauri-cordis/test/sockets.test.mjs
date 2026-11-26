@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import { after, test } from "node:test";
 import WebSocket from "ws";
-import { connectHost } from "tauri-cordis/client";
+import { connectHost, createServiceProxy } from "tauri-cordis/client";
 import { openWindowSocket } from "tauri-cordis/host";
 import { CLOSE } from "tauri-cordis/protocol";
+import { defineService } from "tauri-cordis/services";
 import { until } from "./workspace.mjs";
 
 const ORIGIN = "tauri://localhost";
@@ -137,4 +138,86 @@ test("a window that misses an event asks for a snapshot instead of going on with
   deliver({ type: "event", seq: 9, name: "e", data: 9 });
   assert.deepEqual(snapshots, ["s5", "s8"]);
   assert.deepEqual(events, [6, 9]);
+});
+
+test("service events a window asked for before it connected, or before the host restarted, are asked for again from the snapshot handler", async () => {
+  const asked = [];
+  const record = (host) => (method, params) => {
+    asked.push([host, method, params]);
+    return null;
+  };
+  const first = await serve(() => ({}), record("first"));
+  let target = { port: first.port, token: first.token };
+  let connection = null;
+  const proxy = createServiceProxy((method, params, options) => connection?.call(method, params, options) ?? Promise.reject(new Error("not connected yet")));
+  const notes = proxy.get(defineService("notes/v1", { methods: { list: true }, events: { added: true } }));
+  notes.on("added", () => {});
+  connection = connectHost({
+    resolve: async () => target,
+    window: "main",
+    open,
+    retryMs: [0, 20, 50],
+    onSnapshot: (snapshot, { fresh }) => {
+      if (fresh) void proxy.resubscribe();
+    },
+  });
+  try {
+    const wanted = { service: "notes/v1", event: "added" };
+    assert.ok(await until(() => asked.length === 1), "the first host was asked for the event");
+    assert.deepEqual(asked, [["first", "service.on", wanted]]);
+    const second = await serve(() => ({}), record("second"));
+    target = { port: second.port, token: second.token };
+    await first.close();
+    assert.ok(await until(() => asked.length === 2), "the restarted host was asked for the event again");
+    assert.deepEqual(asked[1], ["second", "service.on", wanted]);
+  } finally {
+    connection.close();
+  }
+});
+
+test("plugin-scoped socket tokens bind caller.plugin on the host and never receive privileged snapshots or events", async () => {
+  const server = await serve(
+    (caller) => (caller?.plugin ? { clients: [], role: caller.plugin } : { clients: [{ plugin: "@a/b", token: "secret" }], role: "window" }),
+    (method, params, window, plugin) => ({ method, params, window, plugin: plugin ?? null }),
+  );
+  const pluginToken = server.issuePluginToken("@evil/plugin");
+  assert.notEqual(pluginToken, server.token);
+  const windowSnapshots = [];
+  const pluginSnapshots = [];
+  const windowEvents = [];
+  const pluginEvents = [];
+  const mainConn = connectHost({
+    resolve: async () => ({ port: server.port, token: server.token }),
+    window: "settings",
+    open,
+    onSnapshot: (snap) => windowSnapshots.push(snap),
+    onEvent: (name, data) => windowEvents.push([name, data]),
+  });
+  const pluginConn = connectHost({
+    resolve: async () => ({ port: server.port, token: pluginToken }),
+    window: "settings",
+    open,
+    onSnapshot: (snap) => pluginSnapshots.push(snap),
+    onEvent: (name, data) => pluginEvents.push([name, data]),
+  });
+  try {
+    assert.ok(await until(() => mainConn.state === "open" && pluginConn.state === "open"));
+    assert.equal(windowSnapshots[0].role, "window");
+    assert.equal(pluginSnapshots[0].role, "@evil/plugin");
+    assert.deepEqual(pluginSnapshots[0].clients, []);
+    assert.deepEqual(await mainConn.call("service.call", { x: 1 }), { method: "service.call", params: { x: 1 }, window: "settings", plugin: null });
+    assert.deepEqual(await pluginConn.call("service.call", { x: 1 }), { method: "service.call", params: { x: 1 }, window: "settings", plugin: "@evil/plugin" });
+    assert.deepEqual(server.windows(), ["settings"]);
+
+    server.publish("clients", [{ secret: true }], { privilegedOnly: true });
+    server.publish("services", [{ name: "timers/v1" }]);
+    assert.ok(await until(() => windowEvents.length === 2 && pluginEvents.length === 1));
+    assert.deepEqual(pluginEvents, [["services", [{ name: "timers/v1" }]]]);
+
+    server.revokePluginToken("@evil/plugin");
+    assert.ok(await until(() => pluginConn.state !== "open"));
+  } finally {
+    mainConn.close();
+    pluginConn.close();
+  }
 });

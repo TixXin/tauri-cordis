@@ -54,6 +54,7 @@ export interface ClientEntry {
   window: string;
   path: string;
   version: string;
+  token?: string;
 }
 
 export interface ClientStatus {
@@ -82,13 +83,46 @@ export interface Bridge {
 
 export function createBridge(call: (method: string, params?: unknown) => Promise<unknown>): Bridge;
 
+export type * from "../app/client.mjs";
+import type { AppClientService, AppLoaderOptions } from "../app/client.mjs";
+
+export interface ScopedPluginConnection {
+  bridge?: Bridge;
+  services?: import("./services.mjs").ServiceProxy;
+  close?: () => void;
+}
+
+export type { LocaleId, LocalizedText } from "../protocol.mjs";
+import type { LocaleId, LocalizedText } from "../protocol.mjs";
+
+export interface LocaleStore {
+  current(): LocaleId;
+  set(next: unknown): boolean;
+  onChange(listener: (locale: LocaleId) => void): () => void;
+  pick(map: LocalizedText | null | undefined): string;
+}
+
+export declare const DEFAULT_LOCALE: "zh-CN";
+export function normalizeLocale(value: unknown): LocaleId;
+export function pickLocale(map: LocalizedText | null | undefined, locale?: string): string;
+export function createLocaleStore(initial?: string): LocaleStore;
+
+export declare class PluginLocale {
+  readonly current: LocaleId;
+  onChange(listener: (locale: LocaleId) => void): () => Promise<void>;
+  pick(map: LocalizedText | null | undefined): string;
+}
+
 export function createLoader(options: {
   registry: SlotRegistry;
   bridge?: Bridge;
+  connectPlugin?: ((entry: ClientEntry) => ScopedPluginConnection | null) | null;
   base: string;
+  appServices?: readonly AppClientService[];
+  locale?: LocaleStore | null;
   importModule?: (url: string) => Promise<any>;
   checkFile?: (url: string) => Promise<void>;
   onStatus?: (status: Map<string, ClientStatus>) => void;
-}): ClientLoader;
+} & AppLoaderOptions & Record<string, unknown>): ClientLoader;
 export { createServiceProxy, type ServiceCall, type ServiceEventMessage, type ServiceProxy } from "./services.mjs";
 export { createWindowServices, type WindowProvideOptions, type WindowServices } from "./window-services.mjs";

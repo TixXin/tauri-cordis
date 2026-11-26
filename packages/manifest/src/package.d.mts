@@ -37,7 +37,7 @@ export interface ReadPackageResult {
   signatures: unknown;
 }
 
-export declare const DEFAULT_NAMESPACE: "fuyu";
+export declare const DEFAULT_NAMESPACE: "cordis";
 export declare const MAX_PACKAGE_BYTES: number;
 export declare const MAX_UNPACKED_BYTES: number;
 export declare const MAX_FILES: number;

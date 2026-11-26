@@ -36,5 +36,5 @@ export function SlotItems({ registry, name, group, props, select, wrap, fallback
 }
 
 export function installShared(modules) {
-  globalThis.__FUYU_SHARED__ = { ...globalThis.__FUYU_SHARED__, ...modules };
+  globalThis.__CORDIS_SHARED__ = { ...globalThis.__CORDIS_SHARED__, ...modules };
 }

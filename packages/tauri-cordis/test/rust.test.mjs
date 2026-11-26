@@ -163,8 +163,8 @@ function manifest(name) {
     type: "module",
     license: "MIT",
     repository: "github:ann/plugin",
-    engines: { fuyu: ">=0.5.0" },
-    fuyu: { manifest: 1, displayName: { "zh-CN": "示例", en: "Example" }, description: { "zh-CN": "示例插件", en: "An example plugin" }, icon: "icon.png", categories: ["utilities"], host: "host.mjs" },
+    engines: { cordis: ">=0.5.0" },
+    cordis: { manifest: 1, displayName: { "zh-CN": "示例", en: "Example" }, description: { "zh-CN": "示例插件", en: "An example plugin" }, icon: "icon.png", categories: ["utilities"], host: "host.mjs" },
   });
 }
 

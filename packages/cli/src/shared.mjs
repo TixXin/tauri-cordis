@@ -4,7 +4,7 @@ export const DEFAULT_SHARED_MODULES = Object.freeze({ ...SHARED_MODULES });
 
 export const HOST_EXTERNALS = Object.freeze([...HOST_SHARED_MODULES]);
 
-export const APP_MODULES = Object.freeze(["react", "react-dom", "fuyu-plugin", "tauri-cordis"]);
+export const APP_MODULES = Object.freeze(["react", "react-dom", "tauri-cordis-plugin", "tauri-cordis"]);
 
 export const INSTALLED_PACKAGE_DEPTH = 3;
 

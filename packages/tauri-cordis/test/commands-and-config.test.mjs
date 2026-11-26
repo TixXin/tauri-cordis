@@ -19,8 +19,8 @@ function manifest(name, app = {}) {
     type: "module",
     license: "MIT",
     repository: `github:${owner}/plugin`,
-    engines: { fuyu: ">=0.5.0" },
-    fuyu: {
+    engines: { cordis: ">=0.5.0" },
+    cordis: {
       manifest: 1,
       displayName: { "zh-CN": "示例", en: "Demo" },
       description: { "zh-CN": "示例描述", en: "Demo description" },
@@ -157,7 +157,7 @@ test("commands/v1 lists declared commands of disabled plugins, runs active ones,
   assert.deepEqual(JSON.parse(readFileSync(join(dataDir, KEYBINDINGS_FILE), "utf8")), {});
 });
 
-test("readManifest validates fuyu.config JSON schema, and ctx.config + plugin-config/v1 validate, persist and reset values", async () => {
+test("readManifest validates cordis.config JSON schema, and ctx.config + plugin-config/v1 validate, persist and reset values", async () => {
   const schema = {
     type: "object",
     properties: {
@@ -174,7 +174,7 @@ test("readManifest validates fuyu.config JSON schema, and ctx.config + plugin-co
     "bad/config.schema.json": "not-json",
   });
   cleanup.push(badSpace.remove);
-  assert.throws(() => readManifest(join(badSpace.dir, "bad"), {}), /fuyu\.config/);
+  assert.throws(() => readManifest(join(badSpace.dir, "bad"), {}), /cordis\.config/);
 
   const { host, dataDir } = await openHost({
     "data/plugins.yml": '- id: "@ann/writer"\n  source: market\n',

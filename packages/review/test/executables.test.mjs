@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { executableKind as manifestExecutableKind } from "@tauri-cordis/manifest";
+import { executableKind as manifestExecutableKind } from "../../manifest/src/executable.mjs";
 import { executableKind, review } from "../src/index.mjs";
 
 const clean = fileURLToPath(new URL("./fixtures/weather-1.0.0", import.meta.url));

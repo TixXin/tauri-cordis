@@ -1,3 +1,3 @@
 # Hello
 
-Says hello on the island. The example plugin of `fuyu-plugin` 2.0.
+Says hello on the island. The example plugin of `tauri-cordis-plugin` 2.0.

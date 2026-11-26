@@ -166,7 +166,7 @@ Read this before you choose it.
 - **Plugins are not sandboxed.** A plugin's host part is ordinary Node code with the user's permissions. That is what "equal" means, and it is why plugins can do real work. The protection is before installation: signatures, review and revocation. If you need to run code you do not trust at all, use a sandboxed design instead. Details in the [security model](./docs/security.md).
 - **React for plugin UI.** Slots render React components, and plugins share the app's copy of React.
 - **It is 0.x.** Interfaces can still change between minor versions. What is stable and what is not is listed in [docs/stability.md](./docs/stability.md).
-- **Some defaults still carry Fuyu's names** in 0.2: the manifest key is `fuyu`, packages end in `.fuyu`, and the CLI help prints `fuyu-plugin`. Some can be changed today and some cannot; each one is listed in [stability](./docs/stability.md#names-inherited-from-fuyu). Neutral defaults are planned for 0.3.
+- **Some defaults are fixed.** The host reads the manifest key `cordis` only, and the slot types list a built-in set of slot names. Each one is listed in [stability](./docs/stability.md#default-names), with what you can do about it.
 
 ## How it compares
 
@@ -194,7 +194,7 @@ tauri-cordis is Cordis plus what a desktop app needs around it: the process supe
 
 ## Where the code comes from
 
-tauri-cordis is developed inside [Fuyu's repository](https://github.com/TixXin/fuyu) and published from here. Today the two copies are synced by hand and have drifted; bringing them back to one source is tracked in [TixXin/fuyu#1040](https://github.com/TixXin/fuyu/issues/1040). Issues and pull requests are welcome here; see [CONTRIBUTING.md](./CONTRIBUTING.md).
+tauri-cordis is developed inside [Fuyu's repository](https://github.com/TixXin/fuyu) and published from here. The source in this repository is generated from Fuyu's by one export script, and CI checks that the two match. Issues and pull requests are welcome here; see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Thanks
 

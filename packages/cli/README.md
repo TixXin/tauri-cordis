@@ -20,6 +20,6 @@ Run `tauri-cordis-plugin help` for every option. A new project from `npm create 
 
 The same functions are exported for programmatic use (`build`, `pack`, `check`, `review`, and the installer planner an app uses to install a package).
 
-In 0.2 the help text still says `fuyu-plugin` and the default key location is `~/.fuyu-plugin/signing.key`; see [stability](https://github.com/TixXin/tauri-cordis/blob/main/docs/stability.md#names-inherited-from-fuyu).
+The default signing key location is `~/.tauri-cordis-plugin/signing.key`; see [stability](https://github.com/TixXin/tauri-cordis/blob/main/docs/stability.md#default-names).
 
 Guide: [Writing a plugin](https://github.com/TixXin/tauri-cordis/blob/main/docs/writing-plugins.md). License: MIT.

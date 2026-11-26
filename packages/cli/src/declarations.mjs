@@ -13,7 +13,7 @@ function literalCalls(pattern, file, code) {
   return [...code.matchAll(pattern)].map((match) => ({ name: match[2], file, line: lineAt(code, match.index) }));
 }
 
-export function compareDeclarations({ app, appKey = "fuyu", host, clients, nodeApis, sourceNodeApis }) {
+export function compareDeclarations({ app, appKey = "cordis", host, clients, nodeApis, sourceNodeApis }) {
   const warnings = [];
   const code = [...(host ? [host] : []), ...clients];
   const network = (app.network ?? []).map((item) => item.toLowerCase());

@@ -6,15 +6,15 @@ const style = {
   gap: 8,
   margin: "4px 8px",
   padding: "4px 8px",
-  borderRadius: "var(--fuyu-plugin-radius)",
+  borderRadius: "var(--tauri-cordis-plugin-radius)",
   font: "12px ui-monospace, monospace",
-  color: "var(--fuyu-plugin-text-secondary)",
-  background: "var(--fuyu-plugin-surface)",
+  color: "var(--tauri-cordis-plugin-text-secondary)",
+  background: "var(--tauri-cordis-plugin-surface)",
   minWidth: 0,
   whiteSpace: "nowrap",
 };
 const greetingStyle = { minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" };
-const countStyle = { flexShrink: 0, color: "var(--fuyu-plugin-text-muted)" };
+const countStyle = { flexShrink: 0, color: "var(--tauri-cordis-plugin-text-muted)" };
 
 export default function apply(ctx) {
   function Hello() {

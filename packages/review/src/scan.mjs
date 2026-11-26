@@ -1,8 +1,9 @@
 import { builtinModules } from "node:module";
 import { lex, lineAt, lineStarts } from "./lexer.mjs";
+import { APP_DATA } from "./app/data.mjs";
 
 const BUILTINS = new Set(builtinModules.filter((name) => !name.startsWith("_")).map((name) => name.split("/")[0]));
-const FILE_EXTENSIONS = new Set(["js", "mjs", "cjs", "ts", "mts", "cts", "jsx", "tsx", "json", "css", "html", "htm", "png", "jpg", "jpeg", "gif", "svg", "webp", "ico", "md", "txt", "map", "node", "wasm", "lock", "yaml", "yml", "toml", "xml", "zip", "fuyu", "log", "csv", "py", "rs", "sh", "ps1", "exe", "dll", "mp3", "wav", "ogg", "woff", "woff2", "ttf"]);
+const FILE_EXTENSIONS = new Set(["js", "mjs", "cjs", "ts", "mts", "cts", "jsx", "tsx", "json", "css", "html", "htm", "png", "jpg", "jpeg", "gif", "svg", "webp", "ico", "md", "txt", "map", "node", "wasm", "lock", "yaml", "yml", "toml", "xml", "zip", "cordis", "log", "csv", "py", "rs", "sh", "ps1", "exe", "dll", "mp3", "wav", "ogg", "woff", "woff2", "ttf"]);
 const PROPERTY_LIKE = new Set(["id", "in", "is", "it", "at", "as", "to", "do", "on", "no", "or", "so", "go", "my", "me", "us"]);
 const COMMON_TLDS = new Set(["com", "net", "org", "io", "dev", "app", "ai", "xyz", "info", "biz", "top", "site", "online", "tech", "cloud", "store", "shop", "live", "pro", "club", "vip", "link", "click", "fun", "space", "website", "page", "run", "workers", "pages", "ngrok", "onion", "gov", "edu", "mil", "int", "museum", "name", "mobi"]);
 const IGNORED_HOSTS = /^(?:localhost|127(?:\.\d{1,3}){3}|0\.0\.0\.0|\[::1\]|www\.w3\.org|(?:[\w-]+\.)*example\.(?:com|org|net))$/i;
@@ -110,7 +111,6 @@ const SENSITIVE_STRIPPED = [["home-dir", /\bprocess\s*\.\s*env\s*(?:\.\s*|\[\s*[
 const ABSOLUTE_PATH = /^(?:\/(?:Users|home|etc|var|tmp|private|Library|System|usr|opt|root|Applications|Volumes)(?:\/|$)|[A-Za-z]:[\\/]|\\\\[^\\]|~[\\/])/;
 const HOME_IN_STRING = /(?:^|[\s"'=:])~[\\/]|\$HOME\b|%(?:USERPROFILE|APPDATA|LOCALAPPDATA)%|(?:^|[\\/])\.ssh(?:[\\/]|$)/i;
 const PARENT_PATH = /(?:^|[\\/])\.\.(?:[\\/]|$)/;
-const APP_DATA = /com\.tixxin\.fuyu|com\.focusd\.island|focusd-island|fly-island|(?:^|[\\/])\.fuyu(?:[\\/]|$)|[\\/]plugins[\\/]@?[\w.-]+|agent-status\.json/i;
 
 export function scanCode(text) {
   const { masked, stripped, strings } = lex(text);

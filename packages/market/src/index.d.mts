@@ -18,6 +18,7 @@ export type ManifestSummary = {
   readonly description: Localized;
   readonly license: string;
   readonly categories?: readonly string[];
+  readonly keywords?: readonly string[];
   readonly preview?: boolean;
   readonly requires?: Readonly<Record<string, string>>;
   readonly nodeApis: readonly string[];
@@ -33,7 +34,7 @@ export type VersionEntry = {
   readonly version: string;
   readonly repository: string;
   readonly commit: string;
-  readonly engines: { readonly fuyu: string };
+  readonly engines: { readonly cordis: string };
   readonly platforms: readonly Platform[];
   readonly url: string;
   readonly sha256: string;
@@ -45,6 +46,7 @@ export type VersionEntry = {
   readonly manifest: ManifestSummary;
   readonly icon: Asset;
   readonly screenshots?: readonly Screenshot[];
+  readonly docs?: Readonly<Record<string, string>>;
 };
 
 export type Publisher = {
@@ -62,7 +64,15 @@ export type PluginEntry = {
 
 type Header = { readonly format: 3; readonly serial: number; readonly generatedAt: Time; readonly expires: Time };
 
-export type IndexV3 = Header & { readonly revokedSerial?: number; readonly plugins: readonly PluginEntry[] };
+export type BundleEntry = {
+  readonly id: string;
+  readonly displayName: Localized;
+  readonly description: Localized;
+  readonly plugins: readonly string[];
+  readonly onboarding?: boolean;
+};
+
+export type IndexV3 = Header & { readonly revokedSerial?: number; readonly plugins: readonly PluginEntry[]; readonly bundles?: readonly BundleEntry[] };
 
 export type RevocationLevel = "warn" | "disable";
 export type RevocationEntry = {
@@ -83,7 +93,7 @@ export declare function isValidVersion(text: unknown): boolean;
 export declare function isPrerelease(text: unknown): boolean;
 export declare function compareVersions(a: string, b: string): -1 | 0 | 1;
 export declare function isValidRange(text: unknown): boolean;
-export declare function satisfies(version: string, range: string): boolean;
+export declare function satisfies(version: string, range: string, options?: { readonly includePrerelease?: boolean }): boolean;
 
 export declare function signedBytes(text: string): Uint8Array;
 export declare function keyIdOf(raw: Uint8Array): string;
@@ -94,8 +104,8 @@ export declare function signText(text: string, privateKey: PrivateKeyInput): Sig
 export declare function verifyText(text: string, signature: unknown, keys: readonly PublicKeyEntry[]): string | null;
 
 export type CommitFields = { readonly name: string; readonly version: string; readonly repository: string; readonly commit: string };
-export declare const COMMIT_DOMAIN: "fuyu-plugin-commit/1";
-export declare const KEY_DOMAIN: "fuyu-plugin-key/1";
+export declare const COMMIT_DOMAIN: "tauri-cordis-plugin-commit/1";
+export declare const KEY_DOMAIN: "tauri-cordis-plugin-key/1";
 export declare function commitText(fields: CommitFields): string;
 export declare function signCommit(fields: CommitFields, privateKey: PrivateKeyInput): SignatureObject;
 export declare function verifyCommit(fields: CommitFields, signature: unknown, keys: readonly PublicKeyEntry[]): string | null;
@@ -119,6 +129,11 @@ export declare function checkAuthor(input: { plugin: PluginEntry; entry: Version
 export declare const FORMAT: 3;
 export declare const PLATFORMS: readonly Platform[];
 export declare const MAX_SCREENSHOTS: number;
+export declare const MAX_KEYWORDS: number;
+export declare const MAX_DOCS: number;
+export declare const DOC_NAME: RegExp;
+export declare const MIN_BUNDLE_PLUGINS: number;
+export declare const MAX_BUNDLE_PLUGINS: number;
 export declare const DEFAULT_MARKET: Required<MarketOptions>;
 export declare function parseName(name: unknown): { scope: string; name: string } | null;
 export declare function validateIndex(doc: unknown, options?: MarketOptions): Problem[];
@@ -167,7 +182,7 @@ export type Selection = {
 export declare function selectVersions(
   plugin: PluginEntry,
   options: {
-    fuyuVersion: string;
+    cordisVersion: string;
     platform: Platform;
     now?: Now;
     installed?: string | null;
