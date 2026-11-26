@@ -92,9 +92,3 @@ In this order; each step works before the next one exists.
 - **A plugin market, permissions, settings pages, saving the notes.** The notes live in memory.
 - **Containment.** It passes `NoContainment`. An app should end the host and what it started when
   the app dies (a Job Object on Windows, a process group elsewhere).
-
-## Names from Fuyu
-
-tauri-cordis came out of the Fuyu app, and 0.2.0 still fixes a few of its names. The example uses
-them where there is no option: the `fuyu` key and `engines.fuyu` in a plugin's `package.json` (with
-`zh-CN` and `en` text), and the global `__FUYU_SHARED__` that `installShared` sets.

@@ -4,6 +4,7 @@ export { openWindowSocket } from "./sockets.mjs";
 export { shareModules } from "./share.mjs";
 export { FAULT_LIMIT, KINDS, SAFE_MODES, kindOf } from "./gate.mjs";
 export { serviceError } from "./services.mjs";
+export * from "../app/host.mjs";
 export { RUST_TIMEOUT_MS, RustBridge, rustError } from "./rust.mjs";
 export { BUILTINS_FILE, BUILTINS_FORMAT, BUILTIN_PREFIX, readBuiltins } from "./builtins.mjs";
 export { DATA_DIR, dataDirOf } from "./data.mjs";
@@ -11,3 +12,5 @@ export { DEV_PREFIX, INSTALLED_SOURCES, PACKAGES_DIR, SOURCES, readManifest } fr
 export { KEYBINDINGS_FILE } from "./commands.mjs";
 export { CONFIG_FILE } from "./plugin-config.mjs";
 export { MAX_WINDOWS_PER_PLUGIN, MAX_WINDOWS_TOTAL, WINDOW_RULES_FILE } from "./windows.mjs";
+export { HostLocale } from "./locale.mjs";
+export { DEFAULT_LOCALE, normalizeLocale, pickLocale } from "../locale.mjs";

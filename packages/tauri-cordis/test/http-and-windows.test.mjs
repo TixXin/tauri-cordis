@@ -19,8 +19,8 @@ function manifest(name, app = {}) {
     type: "module",
     license: "MIT",
     repository: `github:${owner}/plugin`,
-    engines: { fuyu: ">=0.5.0" },
-    fuyu: {
+    engines: { cordis: ">=0.5.0" },
+    cordis: {
       manifest: 1,
       displayName: { "zh-CN": "示例", en: "Demo" },
       description: { "zh-CN": "示例描述", en: "Demo description" },
@@ -205,7 +205,18 @@ test("ctx.windows gates on experimental windows/v1, enforces limits and guardrai
   assert.equal(created.alwaysOnTop, true);
   assert.equal(created.clickThrough, true);
   assert.equal(created.visible, true);
-  assert.ok(rpc.calls.some((c) => c.method === "pluginKernel.windowOpen" && c.params.windowId === "overlay-1" && c.params.alwaysOnTop === true));
+  assert.ok(
+    rpc.calls.some(
+      (c) =>
+        c.method === "pluginKernel.windowOpen" &&
+        c.params.spec?.pluginId === "hud" &&
+        c.params.spec?.windowId === "overlay-1" &&
+        c.params.spec?.title === "HUD 1" &&
+        c.params.spec?.alwaysOnTop === true &&
+        c.params.spec?.clickThrough === true &&
+        c.params.spec?.visible === true,
+    ),
+  );
 
   const updatedRules = await winService.setRules({
     id: "hud",

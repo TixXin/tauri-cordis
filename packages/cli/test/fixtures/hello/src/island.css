@@ -1,24 +1,24 @@
-.fuyu-hello {
+.cordis-hello {
   display: flex;
   justify-content: space-between;
   gap: 8px;
   margin: 4px 8px;
   padding: 4px 8px;
-  border-radius: var(--fuyu-plugin-radius);
+  border-radius: var(--tauri-cordis-plugin-radius);
   font: 12px ui-monospace, monospace;
-  color: var(--fuyu-plugin-text-secondary);
-  background: var(--fuyu-plugin-surface);
+  color: var(--tauri-cordis-plugin-text-secondary);
+  background: var(--tauri-cordis-plugin-surface);
   min-width: 0;
   white-space: nowrap;
 }
 
-.fuyu-hello__greeting {
+.cordis-hello__greeting {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.fuyu-hello__count {
+.cordis-hello__count {
   flex-shrink: 0;
-  color: var(--fuyu-plugin-text-muted);
+  color: var(--tauri-cordis-plugin-text-muted);
 }

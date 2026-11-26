@@ -31,30 +31,28 @@ These are used in production by Fuyu and are meant to stay as they are. Changing
 | `ctx.commands`, `ctx.config`, `ctx.http` | New in 0.2. The shape is settled, details may be adjusted. |
 | The props a slot passes to its items | Defined by the app, per slot. Version the slot name when you change them. |
 | `@tauri-cordis/market` index format | Format 3 today. A change to it gets a new format number. |
-| Names inherited from Fuyu | See below. |
+| Default names | See below. |
 
-## Names inherited from Fuyu
+## Default names
 
-tauri-cordis was cut out of [Fuyu](https://github.com/TixXin/fuyu), and 0.2 still has Fuyu's names in several defaults. This is the honest list, with what you can do about each today.
+tauri-cordis was cut out of [Fuyu](https://github.com/TixXin/fuyu). Up to 0.2 several defaults still carried Fuyu's names; since 0.3 they are tauri-cordis's own. Some of them are still fixed. This is the list, with what you can do about each today.
 
-| Name | Where it shows | In 0.2 |
+| Name | Where it shows | In 0.3 |
 |---|---|---|
-| Manifest key `fuyu` and `engines.fuyu` in a plugin's `package.json` | The host, the CLI, the scaffolder | **Fixed in the host.** `validateManifest` and the build functions take `appKey`, but the host reads `fuyu` only, so a plugin built with another key does not load. Use `fuyu`. |
-| Official scope `@fuyu` | Manifest validation | `officialScope` option of `validateManifest`. |
-| Package extension `.fuyu` and the signature namespace | `packDirectory`, `signPackage`, the CLI | `namespace` and `extension` options in `@tauri-cordis/manifest`. The CLI has no flag for them. |
-| `fuyu-plugin` in the CLI's help text, and a second `fuyu-plugin` command in `@tauri-cordis/cli` | Terminal output | Cosmetic. The command to use is `tauri-cordis-plugin`. |
-| Signing key at `~/.fuyu-plugin/signing.key`, environment variable `FUYU_PLUGIN_SIGNING_KEY` | `keygen`, `sign`, `pack --sign` | Pass `--key <file>`. |
-| `FUYU_PLUGINS_V3_DIR` | `tauri-cordis-plugin dev` | Pass `--data-dir <folder>`. |
-| The slot table `SLOTS` in `tauri-cordis/protocol` (`island.*`, `settings.*`) | Types, CLI checks | Pass your own rules to `createSlots`. The `SlotName` type still lists Fuyu's slots, so TypeScript needs a cast for yours. |
-| CSS variables `--fuyu-plugin-*` (`SLOT_THEME`) | Plugin styles | Define them in your app's CSS under those names. |
-| Format ids `fuyu-plugin-review/1`, `fuyu-plugin-commit/1` | Review reports, commit signatures | Identifiers only. |
+| Manifest key `cordis` and `engines.cordis` in a plugin's `package.json` | The host, the CLI, the scaffolder | **Fixed in the host.** `validateManifest` and the build functions take `appKey`, but the host reads `cordis` only, so a plugin built with another key does not load. Use `cordis`. |
+| Official scope `@cordis` | Manifest validation | `officialScope` option of `validateManifest`. |
+| Package extension `.cordis` and the signature namespace `cordis` | `packDirectory`, `signPackage`, the CLI | `namespace` and `extension` options in `@tauri-cordis/manifest`. The CLI has no flag for them. |
+| Signing key at `~/.tauri-cordis-plugin/signing.key`, environment variable `CORDIS_PLUGIN_SIGNING_KEY` | `keygen`, `sign`, `pack --sign` | Pass `--key <file>`. |
+| `CORDIS_PLUGINS_V3_DIR` | `tauri-cordis-plugin dev` | Pass `--data-dir <folder>`. |
+| The slot table `SLOTS` in `tauri-cordis/protocol` (`island.*`, `settings.*`) | Types, CLI checks | Pass your own rules to `createSlots`. The `SlotName` type still lists these slots, so TypeScript needs a cast for yours. |
+| CSS variables `--tauri-cordis-plugin-*` (`SLOT_THEME`) | Plugin styles | Define them in your app's CSS under those names. |
+| Format ids `tauri-cordis-plugin-review/1`, `tauri-cordis-plugin-commit/1` | Review reports, commit signatures | Identifiers only. |
 | Locales `en` and `zh-CN` both required for `displayName` and `description` | Manifest validation | Fixed (`REQUIRED_LOCALES`). |
 | Review findings written in Chinese | `@tauri-cordis/review`, `tauri-cordis-plugin review` | The `check`, `kind` and `tier` fields are stable; map them to your own text. |
-| Environment variable `FUYU_NODE` | `NodeSearch::from_env`, as an explicit path to Node | Build the `NodeSearch` yourself and set `explicit`. |
-| `globalThis.__FUYU_SHARED__` | `installShared` and the React shims | Internal. Nothing to change. |
-| "Fuyu" in the protocol-mismatch error and the download User-Agent `Fuyu-plugin-base/<version>` | The crate's error text, requests to nodejs.org | Cosmetic. |
+| Environment variable `CORDIS_NODE` | `NodeSearch::from_env`, as an explicit path to Node | Build the `NodeSearch` yourself and set `explicit`. |
+| `globalThis.__CORDIS_SHARED__` | `installShared` and the React shims | Internal. Nothing to change. |
 
-Giving all of these neutral defaults, with Fuyu passing its own names in, is planned for 0.3 and tracked in [TixXin/fuyu#1040](https://github.com/TixXin/fuyu/issues/1040). That release will list every rename under "Breaking".
+The 0.3.0 entry in the [changelog](../CHANGELOG.md) lists every rename from 0.2. Letting an app choose the manifest key the host reads is not done yet.
 
 ## Requirements
 

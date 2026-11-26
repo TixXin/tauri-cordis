@@ -3,12 +3,13 @@ import { isAbsolute, join, relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { validateManifest } from "@tauri-cordis/manifest";
 import { dataDirOf } from "./data.mjs";
+import { versionedUrl } from "./versioned.mjs";
 
 export const PACKAGES_DIR = "packages";
 export const DEV_PREFIX = "dev";
 export const INSTALLED_SOURCES = ["market", "manual"];
 export const SOURCES = [...INSTALLED_SOURCES, "dev"];
-export const SOURCE = Symbol.for("fuyu.plugin-source");
+export const SOURCE = Symbol.for("cordis.plugin-source");
 export const CLIENT_ONLY = new URL("./client-only.mjs", import.meta.url).href;
 const WINDOW = /^[a-z][a-z0-9-]{0,63}$/;
 
@@ -45,15 +46,15 @@ function declaredOf(app) {
 
 function readConfigSchema(root, configPath) {
   if (configPath === undefined) return null;
-  const file = entryFile(root, configPath, "fuyu.config");
+  const file = entryFile(root, configPath, "cordis.config");
   let parsed;
   try {
     parsed = JSON.parse(readFileSync(file, "utf8"));
   } catch (error) {
-    throw rejection(`fuyu.config (${configPath}) is not valid JSON: ${error?.message ?? error}`);
+    throw rejection(`cordis.config (${configPath}) is not valid JSON: ${error?.message ?? error}`);
   }
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-    throw rejection(`fuyu.config (${configPath}) must be a JSON object`);
+    throw rejection(`cordis.config (${configPath}) must be a JSON object`);
   }
   return parsed;
 }
@@ -74,16 +75,17 @@ export function readManifest(root, options) {
   const result = validateManifest(pkg, options);
   if (!result.ok) throw rejection(`its package.json does not pass the check: ${result.errors.map((issue) => issue.message).join("; ")}`, result.errors);
   const app = result.app;
-  const host = app.host === undefined ? null : entryFile(root, app.host, "fuyu.host");
+  const host = app.host === undefined ? null : entryFile(root, app.host, "cordis.host");
   const clients = Object.entries(app.client ?? {}).map(([window, path]) => {
-    if (!WINDOW.test(window)) throw rejection(`fuyu.client.${window}: ${window} is not a window name`);
-    return { window, file: entryFile(root, path, `fuyu.client.${window}`) };
+    if (!WINDOW.test(window)) throw rejection(`cordis.client.${window}: ${window} is not a window name`);
+    return { window, file: entryFile(root, path, `cordis.client.${window}`) };
   });
   const configSchema = readConfigSchema(root, app.config);
   return {
     package: pkg.name,
     version: pkg.version,
     displayName: app.displayName ?? null,
+    icon: typeof app.icon === "string" && app.icon !== "" ? app.icon : null,
     host,
     clients,
     commands: app.commands ?? [],
@@ -126,16 +128,23 @@ export function sourceOf(options, { dir, appVersion }) {
     return { source, root, ...readManifest(root, { allowExperimental: true, official: true }) };
   }
   const root = installedRoot(id, join(dir, PACKAGES_DIR));
-  const manifest = readManifest(root, { allowExperimental: false, appVersion, official: source === "market" });
+  const official = source === "market" && options.official === true;
+  const manifest = readManifest(root, { allowExperimental: false, appVersion, official });
   if (manifest.package !== id) throw rejection(`the package in ${root} is ${manifest.package}, not ${id}`);
   return { source, root, ...manifest };
+}
+
+function hostUrl(meta) {
+  if (!meta.host) return CLIENT_ONLY;
+  if (!INSTALLED_SOURCES.includes(meta.source)) return pathToFileURL(meta.host).href;
+  return versionedUrl(meta.root, meta.host, meta.version);
 }
 
 export function withSource(options, context) {
   const { kind: _kind, ...rest } = options;
   try {
     const meta = sourceOf(options, context);
-    return { ...rest, name: meta.host ? pathToFileURL(meta.host).href : CLIENT_ONLY, [SOURCE]: meta };
+    return { ...rest, name: hostUrl(meta), [SOURCE]: meta };
   } catch (error) {
     return { ...rest, name: CLIENT_ONLY, [SOURCE]: { source: options.source, rejected: { reason: error.message, errors: error.errors ?? [] } } };
   }

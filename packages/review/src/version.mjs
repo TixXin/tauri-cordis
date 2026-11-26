@@ -22,7 +22,7 @@ function readManifest(tree) {
 }
 
 function manifestFacts(manifest) {
-  const fuyu = manifest?.fuyu && typeof manifest.fuyu === "object" ? manifest.fuyu : {};
+  const cordis = manifest?.cordis && typeof manifest.cordis === "object" ? manifest.cordis : {};
   const dependencies = {};
   for (const field of DEPENDENCY_FIELDS) {
     const value = manifest?.[field];
@@ -33,11 +33,11 @@ function manifestFacts(manifest) {
   return {
     name: typeof manifest?.name === "string" ? manifest.name : null,
     version: typeof manifest?.version === "string" ? manifest.version : null,
-    network: list(fuyu.network).map((host) => host.toLowerCase()),
-    provides: list(fuyu.provides),
-    replaces: list(fuyu.replaces),
-    experimental: list(fuyu.experimental),
-    nodeApis: Array.isArray(fuyu.nodeApis) ? list(fuyu.nodeApis) : null,
+    network: list(cordis.network).map((host) => host.toLowerCase()),
+    provides: list(cordis.provides),
+    replaces: list(cordis.replaces),
+    experimental: list(cordis.experimental),
+    nodeApis: Array.isArray(cordis.nodeApis) ? list(cordis.nodeApis) : null,
     dependencies,
     installHooks: scripts,
   };

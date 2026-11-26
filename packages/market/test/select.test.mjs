@@ -7,7 +7,7 @@ const author = makeKey();
 const name = "@someone/weather";
 const v = (ver, options = {}) => version(name, author, { v: ver, ...options });
 const pick = (versions, options = {}) =>
-  selectVersions(plugin({ author, versions }), { fuyuVersion: "0.5.0", platform: "windows", now: NOW, ...options });
+  selectVersions(plugin({ author, versions }), { cordisVersion: "0.5.0", platform: "windows", now: NOW, ...options });
 const ver = (choice) => choice?.entry.version ?? null;
 
 test("auto-update only takes versions past the 3-day cooldown", () => {
@@ -52,7 +52,7 @@ test("with only fresh versions a new install takes the newest and marks it just 
 
 test("an older island gets the newest version it can run", () => {
   const versions = [v("1.0.0", { engines: ">=0.3.0" }), v("1.1.0", { engines: ">=0.4.0" }), v("2.0.0", { engines: ">=0.6.0" })];
-  const result = pick(versions, { fuyuVersion: "0.4.2", installed: "1.0.0" });
+  const result = pick(versions, { cordisVersion: "0.4.2", installed: "1.0.0" });
   assert.equal(ver(result.autoUpdate), "1.1.0");
   assert.equal(ver(result.manual), "1.1.0");
   assert.equal(ver(result.install), "1.1.0");
@@ -88,4 +88,12 @@ test("disabled versions are never picked; warned ones only by hand", () => {
 test("versions sort by semver, not by list order", () => {
   const result = pick([v("1.10.0"), v("1.9.0"), v("1.2.0")]);
   assert.equal(ver(result.install), "1.10.0");
+});
+
+test("a beta island installs the versions its ordering allows", () => {
+  const versions = [v("1.0.0", { engines: ">=0.3.10" }), v("1.1.0", { engines: ">=0.4.0" })];
+  const result = pick(versions, { cordisVersion: "0.3.11-beta.4" });
+  assert.equal(ver(result.install), "1.0.0");
+  assert.equal(ver(result.manual), "1.0.0");
+  assert.deepEqual(result.skipped, [{ version: "1.1.0", reason: "engines" }]);
 });

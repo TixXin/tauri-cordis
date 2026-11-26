@@ -182,9 +182,9 @@ test("stopping the host runs the cleanup of every plugin, dependents first", asy
   assert.ok(trace.indexOf("stop a") < trace.indexOf("stop b") && trace.indexOf("stop b") < trace.indexOf("stop c"), trace.join(", "));
 });
 
-test("a plugin that imports fuyu-plugin gets the same kernel as tauri-cordis, so its services reach the others", async () => {
+test("a plugin that imports tauri-cordis-plugin gets the same kernel as tauri-cordis, so its services reach the others", async () => {
   const space = workspace({
-    "alias.mjs": `import * as alias from "fuyu-plugin";
+    "alias.mjs": `import * as alias from "tauri-cordis-plugin";
 import * as base from "tauri-cordis";
 globalThis.sameKernel = alias.Service === base.Service && alias.Context === base.Context;
 export default class Aliased extends alias.Service {

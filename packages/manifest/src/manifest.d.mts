@@ -77,8 +77,8 @@ export interface ValidateManifestResult {
   app: AppManifest | null;
 }
 
-export declare const DEFAULT_APP_KEY: "fuyu";
-export declare const DEFAULT_OFFICIAL_SCOPE: "fuyu";
+export declare const DEFAULT_APP_KEY: "cordis";
+export declare const DEFAULT_OFFICIAL_SCOPE: "cordis";
 export declare const MANIFEST_VERSION: 1;
 export declare const REQUIRED_LOCALES: readonly string[];
 export declare const DEFAULT_CATEGORIES: readonly string[];

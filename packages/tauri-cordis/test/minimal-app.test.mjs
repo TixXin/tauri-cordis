@@ -29,7 +29,7 @@ test("the minimal application imports only Node, ws, tauri-cordis and its own fi
   assert.deepEqual(disallowed, []);
 });
 
-test("a minimal application without Fuyu business code runs end-to-end across shell, host, services and window slots", async () => {
+test("a minimal application without Cordis business code runs end-to-end across shell, host, services and window slots", async () => {
   const result = await runMinimalApp();
   assert.equal(result.protocol, 2);
   assert.equal(result.initialPanel, "1 notes, 2 words");

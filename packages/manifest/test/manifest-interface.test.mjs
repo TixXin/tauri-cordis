@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { DEFAULT_APP_KEY, validateManifest } from "@tauri-cordis/manifest";
 
-const minimal = (appKey = "fuyu") => ({
+const minimal = (appKey = "cordis") => ({
   name: "@someone/weather",
   version: "1.0.0",
   type: "module",
@@ -21,11 +21,11 @@ const minimal = (appKey = "fuyu") => ({
 test("validateManifest returns the manifest and its app section when it is valid", () => {
   const pkg = minimal();
   const result = validateManifest(pkg);
-  assert.equal(DEFAULT_APP_KEY, "fuyu");
+  assert.equal(DEFAULT_APP_KEY, "cordis");
   assert.equal(result.ok, true);
   assert.deepEqual(result.errors, []);
   assert.equal(result.manifest, pkg);
-  assert.equal(result.app, pkg.fuyu);
+  assert.equal(result.app, pkg.cordis);
 });
 
 test("validateManifest reads the app section under a configured key", () => {
@@ -33,7 +33,7 @@ test("validateManifest reads the app section under a configured key", () => {
   const result = validateManifest(minimal("atoll"));
   assert.equal(result.ok, false);
   assert.equal(result.manifest, null);
-  assert.ok(result.errors.some((issue) => issue.path === "fuyu"));
+  assert.ok(result.errors.some((issue) => issue.path === "cordis"));
 });
 
 test("validateManifest rejects what is not an object", () => {

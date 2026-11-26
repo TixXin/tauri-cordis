@@ -83,7 +83,7 @@ test("a window plugin's ctx.host reaches only its own plugin, and its listeners 
   let answer;
   const loader = createLoader({
     registry,
-    base: "fuyu-plugin://localhost",
+    base: "tauri-cordis-plugin://localhost",
     bridge,
     checkFile: async () => {},
     importModule: async () => ({

@@ -18,9 +18,9 @@ function manifest(name, app = {}, extra = {}) {
     type: "module",
     license: "MIT",
     repository: `github:${owner}/plugin`,
-    engines: { fuyu: ">=0.5.0" },
+    engines: { cordis: ">=0.5.0" },
     ...extra,
-    fuyu: {
+    cordis: {
       manifest: 1,
       displayName: { "zh-CN": "示例", en: "Example" },
       description: { "zh-CN": "示例插件", en: "An example plugin" },
@@ -64,7 +64,7 @@ async function open(made, options = {}) {
 
 const byId = (host, id) => host.status().find((entry) => entry.id === id);
 
-test("an installed package loads from plugins-v3/packages/<name>/ by its package.json, with its windows from fuyu.client", async () => {
+test("an installed package loads from plugins-v3/packages/<name>/ by its package.json, with its windows from cordis.client", async () => {
   const made = space({
     "data/plugins.yml": '- id: "@ann/weather"\n  source: market\n',
     "data/packages/@ann/weather/package.json": manifest("@ann/weather", { host: "dist/host.mjs", client: { island: "dist/island.js" } }),
@@ -76,6 +76,8 @@ test("an installed package loads from plugins-v3/packages/<name>/ by its package
   assert.equal(status.state, "running", JSON.stringify(status));
   assert.equal(status.source, "market");
   assert.equal(status.kind, "third-party");
+  assert.deepEqual(status.displayName, { "zh-CN": "示例", en: "Example" }, "the status carries the display name, so the island can label a page that has no title");
+  assert.equal(status.icon, "icon.png", "the status carries the icon path, so the island can head a notice with the plugin's own icon");
   assert.equal(globalThis.sourceProbe.weather, join(made.data, "data", "@ann", "weather"));
   assert.deepEqual(host.clients("island").map((entry) => [entry.plugin, entry.path]), [["@ann/weather", "packages/@ann/weather/dist/island.js"]]);
 });
@@ -120,7 +122,7 @@ test("an installed package fails with a reason when it is missing, misnamed or n
     "data/plugins.yml": ['- id: "@ann/gone"\n  source: market\n', '- id: "@ann/alias"\n  source: manual\n', '- id: "@ann/future"\n  source: market\n', "- id: odd\n  source: shelf\n"].join(""),
     "data/packages/@ann/alias/package.json": manifest("@ann/other", { host: "host.mjs" }),
     "data/packages/@ann/alias/host.mjs": HOST("alias"),
-    "data/packages/@ann/future/package.json": manifest("@ann/future", { host: "host.mjs" }, { engines: { fuyu: ">=9.0.0" } }),
+    "data/packages/@ann/future/package.json": manifest("@ann/future", { host: "host.mjs" }, { engines: { cordis: ">=9.0.0" } }),
     "data/packages/@ann/future/host.mjs": HOST("future"),
   });
   const host = await open(made, { appVersion: "0.6.0" });
@@ -130,6 +132,17 @@ test("an installed package fails with a reason when it is missing, misnamed or n
   assert.match(reasons["@ann/alias"].reason, /@ann\/other/);
   assert.match(reasons["@ann/future"].reason, /9\.0\.0/);
   assert.match(reasons.odd.reason, /source/);
+});
+
+test("a beta app build runs an installed plugin whose engine range is older", async () => {
+  const made = space({
+    "data/plugins.yml": '- id: "@ann/beta"\n  source: market\n',
+    "data/packages/@ann/beta/package.json": manifest("@ann/beta", { host: "host.mjs" }, { engines: { cordis: ">=0.3.10" } }),
+    "data/packages/@ann/beta/host.mjs": HOST("beta"),
+  });
+  const host = await open(made, { appVersion: "0.3.11-beta.4" });
+  const status = byId(host, "@ann/beta");
+  assert.equal(status.state, "running", JSON.stringify(status));
 });
 
 test("a development folder outside the data folder serves its windows under dev/<id>/", async () => {
@@ -148,7 +161,7 @@ test("a development folder outside the data folder serves its windows under dev/
 test("a built-in plugin with a package.json is checked as official and may use experimental interfaces", async () => {
   const made = space({
     "app/builtins.json": JSON.stringify({ format: 1, plugins: [{ id: "pager", root: "pager" }] }),
-    "app/pager/package.json": manifest("@fuyu/pager", { host: "host.mjs", experimental: ["island.peek"], provides: ["pager/v1"] }),
+    "app/pager/package.json": manifest("@cordis/pager", { host: "host.mjs", experimental: ["island.peek"], provides: ["pager/v1"] }),
     "app/pager/host.mjs": HOST("pager"),
     "data/plugins.yml": "[]\n",
   });
@@ -157,7 +170,7 @@ test("a built-in plugin with a package.json is checked as official and may use e
   assert.equal(status.state, "running", JSON.stringify(status));
   assert.equal(status.kind, "builtin");
   assert.equal(status.source, "builtin");
-  made.write({ "app/broken/builtins.json": JSON.stringify({ format: 1, plugins: [{ id: "pager", root: "pager" }] }), "app/broken/pager/package.json": manifest("@fuyu/pager", { host: "host.mjs", categories: [] }), "app/broken/pager/host.mjs": HOST("x") });
+  made.write({ "app/broken/builtins.json": JSON.stringify({ format: 1, plugins: [{ id: "pager", root: "pager" }] }), "app/broken/pager/package.json": manifest("@cordis/pager", { host: "host.mjs", categories: [] }), "app/broken/pager/host.mjs": HOST("x") });
   assert.throws(() => readBuiltins(join(made.app, "broken")), /package\.json/);
 });
 
@@ -176,4 +189,27 @@ test("services and windows a plugin did not declare show up in its status", asyn
   assert.deepEqual(status.undeclared, { provides: ["extra/v1"], client: ["settings"] });
   assert.equal(byId(host, "loose").undeclared, undefined);
   assert.equal(byId(host, "loose").source, "file");
+});
+
+test("a market plugin under @cordis/* is rejected unless marked official: true in plugins.yml", async () => {
+  const made = space({
+    "data/plugins.yml": [
+      '- id: "@cordis/impostor"\n  source: market\n',
+      '- id: "@cordis/verified"\n  source: market\n  official: true\n',
+    ].join(""),
+    "data/packages/@cordis/impostor/package.json": manifest("@cordis/impostor", { host: "host.mjs" }),
+    "data/packages/@cordis/impostor/host.mjs": HOST("impostor"),
+    "data/packages/@cordis/verified/package.json": manifest("@cordis/verified", { host: "host.mjs" }),
+    "data/packages/@cordis/verified/host.mjs": HOST("verified"),
+  });
+  const host = await open(made, { appVersion: "0.6.0" });
+  const impostor = byId(host, "@cordis/impostor");
+  assert.equal(impostor.state, "failed", JSON.stringify(impostor));
+  assert.equal(impostor.blocked.by, "manifest");
+  assert.match(impostor.reason, /@cordis|official/i);
+  assert.equal(globalThis.sourceProbe?.impostor, undefined);
+
+  const verified = byId(host, "@cordis/verified");
+  assert.equal(verified.state, "running", JSON.stringify(verified));
+  assert.equal(globalThis.sourceProbe?.verified, join(made.data, "data", "@cordis", "verified"));
 });

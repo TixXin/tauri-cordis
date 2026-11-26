@@ -1,7 +1,10 @@
 import type { Context } from "../../vendor/cordis/core/lib/index.js";
 import type { ManifestIssue, ValidateManifestOptions } from "@tauri-cordis/manifest";
-import type { ServiceCallName } from "../protocol.mjs";
+import type { LocaleId, LocalizedText, ServiceCallName } from "../protocol.mjs";
 import type { ServiceEntry } from "../services.mjs";
+import type { AppHost, AppPluginStatus } from "../app/host.mjs";
+
+export * from "../app/host.mjs";
 
 export interface LogEntry {
   at: number;
@@ -27,7 +30,7 @@ export interface PluginUsage {
   errors: number;
 }
 
-export interface PluginStatus {
+export interface PluginStatus extends AppPluginStatus {
   id: string;
   name: string;
   state: PluginState;
@@ -39,6 +42,7 @@ export interface PluginStatus {
   lastError?: { at: number; text: string };
   usage?: PluginUsage;
   source?: PluginSource;
+  displayName?: Record<string, string>;
   undeclared?: { provides?: string[]; client?: string[]; slots?: string[]; commands?: string[]; network?: string[] };
   disabledServices?: string[];
   provides?: string[];
@@ -120,13 +124,29 @@ export class RustBridge {
   counts(): Record<string, number>;
 }
 
+export interface HostExtensionInstance {
+  install?(ctx: Context): unknown;
+  attach?(rpc: HostRpc): unknown;
+  attachWindows?(windows: { connected(): string[]; publish(name: string, data: unknown): void }): unknown;
+  windowCall?(method: string, params: any, window: string, plugin: string | null): { value: unknown } | undefined;
+  statusOf?(plugin: string, state: PluginState): Record<string, unknown> | null;
+  watch?(listener: () => void): () => void;
+}
+
+export interface HostExtension {
+  name: string;
+  create(context: { dir: string; dataRoot: string; services: ServiceHub; usage: unknown }): HostExtensionInstance;
+}
+
 export interface HostOptions {
   dir: string;
   config?: string;
   builtins?: string | null;
   dataDir?: string | null;
   appVersion?: string | null;
+  locale?: string;
   apiNames?: string[];
+  extensions?: readonly HostExtension[];
   watch?: boolean;
   dev?: boolean;
   safe?: SafeMode | null;
@@ -137,7 +157,15 @@ export interface HostOptions {
   fetchImpl?: (input: any, init?: any) => Promise<any>;
 }
 
-export interface Host {
+export declare class HostLocale {
+  constructor(initial?: string);
+  install(ctx: Context): () => void;
+  current(): LocaleId;
+  set(next: unknown): boolean;
+  watch(listener: (locale: LocaleId) => void): () => void;
+}
+
+export interface Host extends AppHost {
   ctx: Context;
   logs: LogEntry[];
   status(): PluginStatus[];
@@ -151,6 +179,8 @@ export interface Host {
   rustListeners(): Record<string, number>;
   watchClients(onChange: (clients: ClientEntry[]) => void): () => void;
   serviceHub: ServiceHub;
+  extensions: HostExtensionInstance[];
+  locale: HostLocale;
   services(): ServiceEntry[];
   watchServices(onChange: (services: ServiceEntry[]) => void): () => void;
   settle(): Promise<unknown>;
@@ -214,6 +244,7 @@ export interface PluginPackage {
   package: string;
   version: string;
   displayName: Record<string, string> | null;
+  icon: string | null;
   host: string | null;
   clients: PluginWindowFile[];
   commands: Array<{ id: string; title: Record<string, string>; keybinding?: string }>;
@@ -244,3 +275,6 @@ export const CONFIG_FILE: "config.json";
 export const WINDOW_RULES_FILE: "window-rules.json";
 export const MAX_WINDOWS_PER_PLUGIN: 8;
 export const MAX_WINDOWS_TOTAL: 24;
+export const DEFAULT_LOCALE: "zh-CN";
+export function normalizeLocale(value: unknown): LocaleId;
+export function pickLocale(map: LocalizedText | null | undefined, locale?: string): string;

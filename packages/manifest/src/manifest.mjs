@@ -1,8 +1,8 @@
 import { checkPluginName, parseRepository } from "./names.mjs";
 import { isValidRange, isValidVersion, satisfies } from "./semver.mjs";
 
-export const DEFAULT_APP_KEY = "fuyu";
-export const DEFAULT_OFFICIAL_SCOPE = "fuyu";
+export const DEFAULT_APP_KEY = "cordis";
+export const DEFAULT_OFFICIAL_SCOPE = "cordis";
 export const MANIFEST_VERSION = 1;
 export const REQUIRED_LOCALES = ["zh-CN", "en"];
 export const DEFAULT_CATEGORIES = ["productivity", "todos", "developer", "media", "messages", "information", "utilities"];
@@ -93,7 +93,7 @@ function checkPackage(pkg, check, options) {
   if (!isObject(pkg.engines) || pkg.engines[appKey] === undefined) error(`engines.${appKey}`, "required", `engines.${appKey} is required`);
   else if (!isText(pkg.engines[appKey]) || !isValidRange(pkg.engines[appKey])) {
     error(`engines.${appKey}`, "range", `engines.${appKey} must be a semver range such as ">=0.4.0"`);
-  } else if (options.appVersion !== undefined && !satisfies(options.appVersion, pkg.engines[appKey])) {
+  } else if (options.appVersion !== undefined && !satisfies(options.appVersion, pkg.engines[appKey], { includePrerelease: true })) {
     error(`engines.${appKey}`, "engine", `needs ${appKey} ${pkg.engines[appKey]}, this is ${options.appVersion}`);
   }
   if (pkg.description !== undefined && typeof pkg.description !== "string") error("description", "type", "description must be text");

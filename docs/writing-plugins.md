@@ -28,7 +28,7 @@ my-plugin/
 
 ## The manifest
 
-The manifest is `package.json`. The fields npm knows stay where they are; the rest go under one key. In 0.2 that key is `fuyu` for every app (see [stability](./stability.md#names-inherited-from-fuyu)).
+The manifest is `package.json`. The fields npm knows stay where they are; the rest go under one key. That key is `cordis` for every app (see [stability](./stability.md#default-names)).
 
 ```json
 {
@@ -37,8 +37,8 @@ The manifest is `package.json`. The fields npm knows stay where they are; the re
   "type": "module",
   "license": "MIT",
   "repository": "github:your-github-name/my-plugin",
-  "engines": { "fuyu": ">=0.1.0" },
-  "fuyu": {
+  "engines": { "cordis": ">=0.1.0" },
+  "cordis": {
     "manifest": 1,
     "displayName": { "en": "My plugin", "zh-CN": "我的插件" },
     "description": { "en": "Counts notes", "zh-CN": "统计笔记条数" },

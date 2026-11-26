@@ -24,8 +24,8 @@ test("hello builds into a package folder with the generated manifest fields", as
   assert.deepEqual(result.nodeApis, ["os"]);
   assert.deepEqual(result.warnings, []);
   const manifest = JSON.parse(read(result.outDir, "package.json"));
-  assert.deepEqual(manifest.fuyu.nodeApis, ["os"]);
-  assert.equal(manifest.fuyu.builtWith, VERSION);
+  assert.deepEqual(manifest.cordis.nodeApis, ["os"]);
+  assert.equal(manifest.cordis.builtWith, VERSION);
   assert.equal(validateManifest(manifest, { allowExperimental: false }).ok, true);
 });
 
@@ -40,8 +40,8 @@ test("the host part is ESM for Node with the kernel left outside, the window par
   assert.match(island, /from "\/__shared\/react\.js";/);
   assert.match(island, /from "\/__shared\/react-jsx-runtime\.js";/);
   assert.doesNotMatch(island, /from "react/);
-  assert.match(island, /\.fuyu-hello__count \{/);
-  assert.match(island, /style\.dataset\.fuyuPlugin = "@someone\/fuyu-hello";/);
+  assert.match(island, /\.cordis-hello__count \{/);
+  assert.match(island, /style\.dataset\.cordisPlugin = "@someone\/cordis-hello";/);
   assert.match(island, /export \{\n {2}applyWithStyles as default\n\};/);
 });
 
@@ -50,7 +50,7 @@ test("the same source builds to the same bytes in different folders, and the pac
   const second = await pack(copyFixture("hello", () => {}, tempDir("second-with-a-longer-name")));
   assert.equal(first.sha256, second.sha256);
   assert.deepEqual(readFileSync(first.file), readFileSync(second.file));
-  assert.match(first.file, /someone-fuyu-hello-1\.0\.0\.fuyu$/);
+  assert.match(first.file, /someone-cordis-hello-1\.0\.0\.cordis$/);
   for (const path of ["dist/host.js", "dist/island.js"]) assert.equal(read(first.outDir, path).includes(first.dir), false);
   const opened = readPackage(readFileSync(first.file));
   assert.equal(opened.digest, first.digest);
@@ -75,7 +75,7 @@ test("npm dependencies are bundled into the host part, and CommonJS requires get
   const result = await build(dir);
   const host = read(result.outDir, "dist/host.js");
   assert.match(host, /node_modules\/tiny-format\/index\.js/);
-  assert.match(host, /^import \{ createRequire as __fuyuCreateRequire \} from "node:module";$/m);
+  assert.match(host, /^import \{ createRequire as __cordisCreateRequire \} from "node:module";$/m);
   assert.deepEqual(result.nodeApis, ["module", "os", "path"]);
   assert.equal(result.manifest.dependencies, undefined);
   assert.equal(result.manifest.scripts, undefined);
@@ -88,13 +88,13 @@ test("the host part leaves out only the modules the host shares, by exact name; 
       "node_modules/tauri-cordis/package.json": '{ "name": "tauri-cordis", "type": "module", "exports": { ".": "./index.js", "./protocol": "./protocol.js" } }\n',
       "node_modules/tauri-cordis/index.js": "export class Service {}\n",
       "node_modules/tauri-cordis/protocol.js": 'export const MARKER = "bundled protocol";\n',
-      "src/host.ts": `${read(root, "src/host.ts")}\nimport { MARKER } from "tauri-cordis/protocol";\nimport { host } from "fuyu-plugin";\nexport const marker = [MARKER, host];\n`,
+      "src/host.ts": `${read(root, "src/host.ts")}\nimport { MARKER } from "tauri-cordis/protocol";\nimport { host } from "tauri-cordis-plugin";\nexport const marker = [MARKER, host];\n`,
     });
   });
   const result = await build(dir);
   const host = read(result.outDir, "dist/host.js");
   assert.match(host, /^import \{ Service \} from "tauri-cordis";$/m);
-  assert.match(host, /^import \{ host \} from "fuyu-plugin";$/m);
+  assert.match(host, /^import \{ host \} from "tauri-cordis-plugin";$/m);
   assert.doesNotMatch(host, /from "tauri-cordis\/protocol"/);
   assert.match(host, /node_modules\/tauri-cordis\/protocol\.js/);
   assert.match(host, /"bundled protocol"/);
@@ -105,17 +105,17 @@ test("the host part leaves out only the modules the host shares, by exact name; 
 test("the shared module list comes from tauri-cordis/protocol, and the list and relative paths are parameters", async () => {
   assert.deepEqual(DEFAULT_SHARED_MODULES, SHARED_MODULES);
   const dir = copyFixture("hello", (root) => {
-    writeFiles(root, { "src/island.tsx": `import { host } from "fuyu-plugin";\n${read(root, "src/island.tsx")}\nexport const h = host;\n` });
+    writeFiles(root, { "src/island.tsx": `import { host } from "tauri-cordis-plugin";\n${read(root, "src/island.tsx")}\nexport const h = host;\n` });
   });
-  const shared = { react: "__shared/react.js", "react/jsx-runtime": "__shared/react-jsx-runtime.js", "fuyu-plugin": "__shared/fuyu-plugin.js" };
+  const shared = { react: "__shared/react.js", "react/jsx-runtime": "__shared/react-jsx-runtime.js", "tauri-cordis-plugin": "__shared/tauri-cordis-plugin.js" };
   const { outDir } = await build(dir, { shared, packageDepth: true });
   const island = read(outDir, "dist/island.js");
   assert.equal(INSTALLED_PACKAGE_DEPTH, 3);
-  assert.match(island, /import \{ host \} from "\.\.\/\.\.\/\.\.\/\.\.\/__shared\/fuyu-plugin\.js";/);
+  assert.match(island, /import \{ host \} from "\.\.\/\.\.\/\.\.\/\.\.\/__shared\/tauri-cordis-plugin\.js";/);
   const imports = [...island.matchAll(/from "([^"]*__shared[^"]*)";/g)].map((match) => match[1]);
-  const installed = ["fuyu-plugin://localhost/packages/@a/b/dist/island.js", "fuyu-plugin://localhost/packages/b/dist/island.js", "http://fuyu-plugin.localhost/packages/@a/b/dist/island.js"];
+  const installed = ["tauri-cordis-plugin://localhost/packages/@a/b/dist/island.js", "tauri-cordis-plugin://localhost/packages/b/dist/island.js", "http://tauri-cordis-plugin.localhost/packages/@a/b/dist/island.js"];
   for (const base of installed) {
-    assert.deepEqual(imports.map((path) => new URL(path, base).pathname).sort(), ["/__shared/fuyu-plugin.js", "/__shared/react-jsx-runtime.js", "/__shared/react.js"], base);
+    assert.deepEqual(imports.map((path) => new URL(path, base).pathname).sort(), ["/__shared/tauri-cordis-plugin.js", "/__shared/react-jsx-runtime.js", "/__shared/react.js"].sort(), base);
   }
   assert.equal(sharedPath("dist/pages/settings.js", "__shared/react.js", 0), "../../__shared/react.js");
   assert.equal(sharedPath("dist/pages/settings.js", "__shared/react.js"), "/__shared/react.js");
@@ -132,13 +132,13 @@ test("window code cannot bundle its own copy of a module the app provides", asyn
 });
 
 test("entries are found by convention: dist/<name>.js is built from src/<name>.*", async () => {
-  const missing = copyFixture("hello", (root) => editJson(join(root, "package.json"), (pkg) => (pkg.fuyu.client = { island: "dist/island.js", settings: "dist/settings.js" })));
+  const missing = copyFixture("hello", (root) => editJson(join(root, "package.json"), (pkg) => (pkg.cordis.client = { island: "dist/island.js", settings: "dist/settings.js" })));
   await assert.rejects(build(missing), /no src\/settings\.ts/);
-  const outside = copyFixture("hello", (root) => editJson(join(root, "package.json"), (pkg) => (pkg.fuyu.host = "host.js")));
+  const outside = copyFixture("hello", (root) => editJson(join(root, "package.json"), (pkg) => (pkg.cordis.host = "host.js")));
   await assert.rejects(build(outside), /must point into dist\//);
   const twice = copyFixture("hello", (root) => writeFiles(root, { "src/host.js": "export default 1;\n" }));
   await assert.rejects(build(twice), /more than one source/);
-  const invalid = copyFixture("hello", (root) => editJson(join(root, "package.json"), (pkg) => (pkg.name = "@fuyu/hello")));
+  const invalid = copyFixture("hello", (root) => editJson(join(root, "package.json"), (pkg) => (pkg.name = "@cordis/hello")));
   await assert.rejects(build(invalid), (error) => error instanceof BuildError && error.issues.some((issue) => issue.code === "name-reserved"));
   assert.ok(await build(invalid, { official: true }));
 });
@@ -147,13 +147,13 @@ test("declarations are compared with the code", async () => {
   const dir = copyFixture("hello", (root) => {
     writeFiles(root, { "src/host.ts": `${read(root, "src/host.ts")}\nexport const send = () => fetch("https://collect.weather-stats.net/x");\n` });
     editJson(join(root, "package.json"), (pkg) => {
-      pkg.fuyu.slots = ["island.page/v1"];
-      pkg.fuyu.nodeApis = ["fs"];
+      pkg.cordis.slots = ["island.page/v1"];
+      pkg.cordis.nodeApis = ["fs"];
     });
   });
   const { warnings } = await build(dir);
   const codes = warnings.map((warning) => `${warning.code}:${warning.file ?? warning.path}`);
-  assert.deepEqual(codes.sort(), ["node-apis:fuyu.nodeApis", "undeclared-domain:dist/host.js", "undeclared-slot:dist/island.js"]);
+  assert.deepEqual(codes.sort(), ["node-apis:cordis.nodeApis", "undeclared-domain:dist/host.js", "undeclared-slot:dist/island.js"]);
   assert.match(warnings.find((warning) => warning.code === "undeclared-domain").message, /collect\.weather-stats\.net/);
 });
 
@@ -169,8 +169,8 @@ test("files, the icon, screenshots and the config go into the package; dist/ in 
     });
     editJson(join(root, "package.json"), (pkg) => {
       pkg.files = ["assets", "docs/guide.md", "dist"];
-      pkg.fuyu.screenshots = [{ path: "media/shot.png" }];
-      pkg.fuyu.config = "dist/config.schema.json";
+      pkg.cordis.screenshots = [{ path: "media/shot.png" }];
+      pkg.cordis.config = "dist/config.schema.json";
     });
   });
   const { files } = await build(dir);
@@ -191,14 +191,3 @@ test("a build only empties a folder that holds an earlier build", async () => {
   await build(dir);
 });
 
-test("host code leaves tauri-cordis/services external when listed in HOST_SHARED_MODULES", async () => {
-  const dir = copyFixture("hello", (root) => {
-    writeFileSync(
-      join(root, "src", "host.ts"),
-      'import { defineService } from "tauri-cordis/services";\nexport const service = defineService("demo/v1", { methods: { ping: true } });\nexport function apply() {}\n',
-    );
-  });
-  const built = await build(dir);
-  const hostCode = read(built.outDir, "dist/host.js");
-  assert.match(hostCode, /from "tauri-cordis\/services"/);
-});

@@ -4,6 +4,27 @@ All packages and crates share one version. Until 1.0, a minor release may contai
 
 ## Unreleased
 
+## 0.3.0
+
+The source is now generated from Fuyu's repository by one export script, and CI checks that it matches (see [CONTRIBUTING.md](./CONTRIBUTING.md#where-the-code-comes-from)). This brings over everything Fuyu changed since 0.2.0, and the defaults no longer carry Fuyu's names.
+
+### Breaking
+- Manifest key `fuyu` and `engines.fuyu` → `cordis` and `engines.cordis`. The host only loads plugins written with the new key; rename the key in each plugin's `package.json` and build again.
+- Official scope `@fuyu` → `@cordis`; package extension `.fuyu` and signature namespace `fuyu` → `.cordis` and `cordis`. Packages signed by 0.2 do not verify under 0.3 defaults; pack and sign them again, or pass `namespace` and `extension`.
+- Signing key `~/.fuyu-plugin/signing.key` → `~/.tauri-cordis-plugin/signing.key`; `FUYU_PLUGIN_SIGNING_KEY` → `CORDIS_PLUGIN_SIGNING_KEY`. Move the key file or pass `--key`.
+- Environment variables `FUYU_PLUGINS_V3_DIR`, `FUYU_NODE`, `FUYU_PLUGIN_HOST`, `FUYU_DPAPI_INPUT` → `CORDIS_*`.
+- CSS variables `--fuyu-plugin-*` → `--tauri-cordis-plugin-*`; `globalThis.__FUYU_SHARED__` → `__CORDIS_SHARED__`; format ids `fuyu-plugin-review/1` and `fuyu-plugin-commit/1` → `tauri-cordis-plugin-review/1` and `tauri-cordis-plugin-commit/1`.
+- The `fuyu-plugin` command is gone from `@tauri-cordis/cli`; use `tauri-cordis-plugin`.
+- A third-party plugin that `replaces` a built-in service no longer switches the built-in service off when the configuration is read. The built-in one yields at run time, only while the replacement actually provides the service; if the replacement is stopped, held back by the bisect or safe mode, or fails to start, the built-in one stays on. The plugin status reports `replacedServices` and `disabledServices` as they are.
+
+### Added
+- Host extensions: `startHost({ extensions })` and `createLoader({ appServices })` let an app add its own injected services, window calls and status fields without changing the base.
+- Brought over from Fuyu: plugin locale (`ctx.locale`), plugin secrets, an HTTP proxy for `ctx.http`, versioned service lookup, and in `@tauri-cordis/cli` the `icon`, `lint`, `preview` and `shots` tools; `@tauri-cordis/market` gains bundles.
+
+### Changed
+- `create-tauri-cordis-plugin` writes the `cordis` key and depends on `^0.3.0`.
+- The download User-Agent is `tauri-cordis/<version>`, and the crate's error text no longer names Fuyu.
+
 ### Added
 - `examples/tauri-app`: a Tauri 2 notes app with a window, a built-in plugin and a third-party plugin that can be switched off while it runs.
 - Documentation: [concepts](./docs/concepts.md), [adding it to your app](./docs/getting-started.md), [writing a plugin](./docs/writing-plugins.md), [security model](./docs/security.md), [stability](./docs/stability.md).

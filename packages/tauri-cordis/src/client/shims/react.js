@@ -1,4 +1,4 @@
-const React = globalThis.__FUYU_SHARED__.react;
+const React = globalThis.__CORDIS_SHARED__.react;
 export default React;
 export const {
   Children, Component, Fragment, Profiler, PureComponent, StrictMode, Suspense, act, cache, cloneElement, createContext, createElement,

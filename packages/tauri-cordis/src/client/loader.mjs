@@ -1,11 +1,39 @@
-import { Context } from "../../vendor/cordis/core/lib/index.js";
+import { Context, Service } from "../../vendor/cordis/core/lib/index.js";
 import { HostBridge } from "./bridge.mjs";
+import { APP_CLIENT_SERVICES } from "../app/client.mjs";
+import { PluginLocale } from "./locale-service.mjs";
 import { Slots } from "./slot-service.mjs";
 
-export function createLoader({ registry, base, bridge, importModule = (url) => import(/* @vite-ignore */ url), checkFile = defaultCheck, onStatus }) {
+class PluginServices extends Service {
+  constructor(ctx, proxy) {
+    super(ctx, "services");
+    this.proxy = proxy;
+  }
+
+  get(definition) {
+    return this.proxy.get(definition);
+  }
+
+  list() {
+    return this.proxy.list();
+  }
+
+  has(name) {
+    return this.proxy.has(name);
+  }
+
+  watch(watcher) {
+    return this.ctx.effect(() => this.proxy.watch(watcher), "ctx.services.watch()");
+  }
+}
+
+export function createLoader(options) {
+  const { registry, base, bridge, connectPlugin = null, locale = null, appServices = APP_CLIENT_SERVICES, importModule = (url) => import(/* @vite-ignore */ url), checkFile = defaultCheck, onStatus } = options;
+  const appNames = appServices.map((entry) => entry.name);
+  const installApp = (ctx) => appServices.map((entry) => ctx.plugin(entry.service, entry.options(options)));
   const root = new Context();
-  const ready = Promise.all([root.plugin(Slots, registry), bridge ? root.plugin(HostBridge, bridge) : null]);
-  const inject = bridge ? ["slots", "host"] : ["slots"];
+  const ready = Promise.all([root.plugin(Slots, registry), ...installApp(root), root.plugin(PluginLocale, locale), bridge ? root.plugin(HostBridge, bridge) : null]);
+  const baseInject = bridge ? ["slots", ...appNames, "locale", "host"] : ["slots", ...appNames, "locale"];
   const loaded = new Map();
   const status = new Map();
 
@@ -14,9 +42,43 @@ export function createLoader({ registry, base, bridge, importModule = (url) => i
     onStatus?.(new Map(status));
   };
 
+  async function mountContext(entry) {
+    if (!connectPlugin) {
+      await ready;
+      return { host: root, inject: baseInject, close: null };
+    }
+    const scoped = connectPlugin(entry);
+    if (!scoped) {
+      await ready;
+      return { host: root, inject: baseInject, close: null };
+    }
+    const isolated = new Context();
+    const tasks = [isolated.plugin(Slots, registry), ...installApp(isolated), isolated.plugin(PluginLocale, locale)];
+    const inject = ["slots", ...appNames, "locale"];
+    const pluginBridge = scoped.bridge ?? bridge;
+    if (pluginBridge) {
+      tasks.push(isolated.plugin(HostBridge, pluginBridge));
+      inject.push("host");
+    }
+    if (scoped.services) {
+      tasks.push(isolated.plugin(PluginServices, scoped.services));
+      inject.push("services");
+    }
+    await Promise.all(tasks);
+    return {
+      host: isolated,
+      inject,
+      close: async () => {
+        await isolated.fiber.dispose();
+        scoped.close?.();
+      },
+    };
+  }
+
   async function load(entry) {
     const url = `${base}/${entry.path}?v=${encodeURIComponent(entry.version)}`;
     report(entry.id, { plugin: entry.plugin, state: "loading" });
+    let mounted = null;
     try {
       await checkFile(url);
       const module = await importModule(url);
@@ -24,12 +86,17 @@ export function createLoader({ registry, base, bridge, importModule = (url) => i
       const apply = typeof plugin === "function" ? plugin : plugin?.apply;
       if (typeof apply !== "function") throw new Error(`${entry.path} does not export a plugin (a function, or an object with apply)`);
       if (loaded.get(entry.id)?.entry !== entry) return;
-      await ready;
-      const fiber = root.plugin({ name: entry.plugin, inject, apply: (ctx) => apply(ctx) });
-      loaded.set(entry.id, { entry, fiber });
+      mounted = await mountContext(entry);
+      if (loaded.get(entry.id)?.entry !== entry) {
+        await mounted.close?.();
+        return;
+      }
+      const fiber = mounted.host.plugin({ name: entry.plugin, inject: mounted.inject, apply: (ctx) => apply(ctx) });
+      loaded.set(entry.id, { entry, fiber, close: mounted.close });
       await fiber;
       report(entry.id, { plugin: entry.plugin, state: "running" });
     } catch (error) {
+      await mounted?.close?.();
       report(entry.id, { plugin: entry.plugin, state: "failed", error: String(error?.message ?? error) });
     }
   }
@@ -40,6 +107,7 @@ export function createLoader({ registry, base, bridge, importModule = (url) => i
     status.delete(id);
     onStatus?.(new Map(status));
     await current?.fiber?.dispose();
+    await current?.close?.();
   }
 
   return {
@@ -48,14 +116,14 @@ export function createLoader({ registry, base, bridge, importModule = (url) => i
       const tasks = [];
       for (const [id, current] of loaded) {
         const next = wanted.get(id);
-        if (!next || next.version !== current.entry.version || next.path !== current.entry.path) tasks.push(unload(id));
+        if (!next || next.version !== current.entry.version || next.path !== current.entry.path || next.token !== current.entry.token) tasks.push(unload(id));
       }
       await Promise.all(tasks);
       await Promise.all(
         [...wanted.values()]
           .filter((entry) => !loaded.has(entry.id))
           .map((entry) => {
-            loaded.set(entry.id, { entry, fiber: null });
+            loaded.set(entry.id, { entry, fiber: null, close: null });
             return load(entry);
           }),
       );

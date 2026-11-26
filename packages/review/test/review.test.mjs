@@ -72,7 +72,7 @@ test("a non-empty experimental list is red", () => {
   const dir = variant("experimental", (root) => {
     const path = join(root, "package.json");
     const manifest = JSON.parse(readFileSync(path, "utf8"));
-    manifest.fuyu.experimental = ["island.dock/v0"];
+    manifest.cordis.experimental = ["island.dock/v0"];
     writeFileSync(path, JSON.stringify(manifest, null, 2));
   });
   const report = compare(dir);
@@ -108,7 +108,7 @@ test("sensitive patterns are yellow", () => {
     "home-dir": "import os from 'node:os';\nexport const home = os.homedir();\n",
     "absolute-path": "export const target = '/Users/me/Library/Keychains';\n",
     "parent-path": "export const target = '../../other-plugin/data.json';\n",
-    "app-data": "export const target = 'Library/Application Support/com.tixxin.fuyu/agent-status.json';\n",
+    "app-data": "export const target = 'Library/Application Support/com.tixxin.cordis/plugins/@other/data.json';\n",
   };
   for (const [kind, source] of Object.entries(cases)) {
     const dir = variant(`sensitive-${kind}`, (root) => writeFileSync(join(root, "src", "extra.mjs"), source));
@@ -137,8 +137,8 @@ test("provides, replaces and network changes are yellow", () => {
   const dir = variant("services", (root) => {
     const path = join(root, "package.json");
     const manifest = JSON.parse(readFileSync(path, "utf8"));
-    manifest.fuyu.replaces = ["translation"];
-    manifest.fuyu.network.push("*.weather-stats.net");
+    manifest.cordis.replaces = ["translation"];
+    manifest.cordis.network.push("*.weather-stats.net");
     writeFileSync(path, JSON.stringify(manifest, null, 2));
   });
   const report = compare(dir);

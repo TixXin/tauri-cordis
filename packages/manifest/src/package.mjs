@@ -8,7 +8,7 @@ import { PackageError, createZip, readZip } from "./zip.mjs";
 export { EXECUTABLE_EXTENSIONS, executableKind } from "./executable.mjs";
 export { PackageError } from "./zip.mjs";
 
-export const DEFAULT_NAMESPACE = "fuyu";
+export const DEFAULT_NAMESPACE = "cordis";
 export const MAX_PACKAGE_BYTES = 20 * 1024 * 1024;
 export const MAX_UNPACKED_BYTES = 100 * 1024 * 1024;
 export const MAX_FILES = 5000;

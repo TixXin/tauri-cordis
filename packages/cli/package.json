@@ -1,6 +1,6 @@
 {
   "name": "@tauri-cordis/cli",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "CLI toolkit (build, pack, check, dev, review, keygen, sign) for tauri-cordis plugins",
   "type": "module",
   "license": "MIT",
@@ -33,8 +33,7 @@
     "LICENSE"
   ],
   "bin": {
-    "tauri-cordis-plugin": "bin/tauri-cordis-plugin.mjs",
-    "fuyu-plugin": "bin/fuyu-plugin.mjs"
+    "tauri-cordis-plugin": "bin/tauri-cordis-plugin.mjs"
   },
   "exports": {
     ".": {

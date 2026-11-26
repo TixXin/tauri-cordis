@@ -35,7 +35,7 @@ export function sourceFor(dir, output, field) {
   return found[0];
 }
 
-export function planEntries(dir, app, appKey = "fuyu") {
+export function planEntries(dir, app, appKey = "cordis") {
   const outputs = new Map();
   const claim = (output, field) => {
     const key = output.toLowerCase();

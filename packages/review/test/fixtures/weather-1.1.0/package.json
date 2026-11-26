@@ -1,14 +1,14 @@
 {
-  "name": "@someone/fuyu-weather",
+  "name": "@someone/cordis-weather",
   "version": "1.1.0",
   "type": "module",
   "license": "MIT",
-  "repository": "github:someone/fuyu-weather",
-  "engines": { "fuyu": ">=0.4.0" },
+  "repository": "github:someone/cordis-weather",
+  "engines": { "cordis": ">=0.4.0" },
   "dependencies": {
     "tiny-format": "^1.2.0"
   },
-  "fuyu": {
+  "cordis": {
     "manifest": 1,
     "displayName": { "zh-CN": "天气", "en": "Weather" },
     "description": { "zh-CN": "岛上看天气", "en": "Weather on the island" },

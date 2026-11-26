@@ -33,15 +33,15 @@ export function version(name, author, { v = "1.0.0", published = daysAgo(10), en
     version: v,
     repository,
     commit,
-    engines: { fuyu: engines },
+    engines: { cordis: engines },
     platforms,
-    url: `https://github.com/TixXin/fuyu-plugins/releases/download/x/${v}.fuyu`,
+    url: `https://github.com/TixXin/tauri-cordis-plugins/releases/download/x/${v}.cordis`,
     sha256: "a".repeat(64),
     size: 1234,
     publishedAt: published,
     reviewedAt: published,
     manifest: manifest(),
-    icon: { url: "https://raw.githubusercontent.com/TixXin/fuyu-plugins/main/icons/weather.png", sha256: "b".repeat(64) },
+    icon: { url: "https://raw.githubusercontent.com/TixXin/tauri-cordis-plugins/main/icons/weather.png", sha256: "b".repeat(64) },
   };
   if (urgent) entry.urgent = { reason: { "zh-CN": "安全修复", en: "Security fix" } };
   if (sign && author) entry.authorSignature = signCommit({ name, version: v, repository, commit }, author.privateKey);

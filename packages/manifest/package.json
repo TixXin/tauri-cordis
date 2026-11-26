@@ -1,6 +1,6 @@
 {
   "name": "@tauri-cordis/manifest",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Plugin manifest validation, deterministic zip packaging, and Ed25519 package signatures for tauri-cordis",
   "type": "module",
   "license": "MIT",

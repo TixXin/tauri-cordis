@@ -5,7 +5,11 @@ import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
-const ALLOWED = [/^node:/, /^\.\.?\//, /^@tauri-cordis\/(manifest|market|review)(\/|$)/, /^tauri-cordis\/protocol$/, /^esbuild$/];
+const PACKAGES = ["@tauri-cordis/manifest", "@tauri-cordis/market", "@tauri-cordis/review"];
+const allowedPackage = (specifier) => PACKAGES.some((name) => specifier === name || specifier.startsWith(`${name}/`)) || specifier === "tauri-cordis/protocol";
+const ALLOWED = [/^node:/, /^\.\.?\//, { test: allowedPackage }, /^esbuild$/];
+const HARNESS = "src/shots/harness.mjs";
+const HARNESS_ALLOWED = [/^react$/, /^react-dom\/client$/, /^cordis-shots:/];
 
 function files(dir) {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -21,7 +25,8 @@ test("@tauri-cordis/cli imports nothing from the app, only Node and the allowed 
     const text = readFileSync(file, "utf8");
     for (const [, specifier] of text.matchAll(/(?:from|import)\s*\(?\s*["']([^"']+)["']/g)) {
       const outside = specifier.startsWith(".") && relative(root, join(file, "..", specifier)).startsWith("..");
-      if (outside || !ALLOWED.some((pattern) => pattern.test(specifier))) strays.push(`${relative(root, file)}: ${specifier}`);
+      const allowed = relative(root, file).split("\\").join("/") === HARNESS ? [...ALLOWED, ...HARNESS_ALLOWED] : ALLOWED;
+      if (outside || !allowed.some((pattern) => pattern.test(specifier))) strays.push(`${relative(root, file)}: ${specifier}`);
     }
   }
   assert.deepEqual(strays, []);

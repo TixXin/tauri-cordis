@@ -15,7 +15,7 @@ test("create-tauri-cordis-plugin scaffolds a valid plugin that builds, passes ch
       dir: target,
       scope: "alice",
       name: "hello-notes",
-      appKey: "fuyu",
+      appKey: "cordis",
       windowName: "island",
       slot: "island.page/v1",
     });

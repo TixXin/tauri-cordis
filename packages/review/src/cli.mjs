@@ -6,7 +6,7 @@ import { parseArgs } from "node:util";
 import { renderMarkdown } from "./markdown.mjs";
 import { review } from "./review.mjs";
 
-const USAGE = `用法：fuyu-plugin-review <旧版本目录 | -> <新版本目录> [选项]
+const USAGE = `用法：tauri-cordis-plugin-review <旧版本目录 | -> <新版本目录> [选项]
 
   -              没有旧版本（首次上架）
   --old-built    旧版本的构建产物目录

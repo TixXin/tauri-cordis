@@ -1,7 +1,7 @@
 import { signText, verifyText } from "./keys.mjs";
 
-export const COMMIT_DOMAIN = "fuyu-plugin-commit/1";
-export const KEY_DOMAIN = "fuyu-plugin-key/1";
+export const COMMIT_DOMAIN = "tauri-cordis-plugin-commit/1";
+export const KEY_DOMAIN = "tauri-cordis-plugin-key/1";
 
 const FIELDS = ["name", "version", "repository", "commit"];
 

@@ -8,7 +8,7 @@ const ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fi
 export function projectFiles(options) {
   const scope = String(options.scope ?? "example").replace(/^@/, "").toLowerCase();
   const name = String(options.name ?? "hello-plugin").toLowerCase();
-  const appKey = options.appKey ?? "fuyu";
+  const appKey = options.appKey ?? "cordis";
   const windowName = options.windowName ?? "main";
   const slot = options.slot ?? `${windowName}.panel/v1`;
   const packageName = `@${scope}/${name}`;
@@ -35,10 +35,10 @@ export function projectFiles(options) {
       typecheck: "tsc --noEmit",
     },
     devDependencies: {
-      "@tauri-cordis/cli": "^0.2.0",
+      "@tauri-cordis/cli": "^0.3.0",
       "@types/react": "^19.1.8",
       react: "^19.1.0",
-      "tauri-cordis": "^0.2.0",
+      "tauri-cordis": "^0.3.0",
       typescript: "~5.8.3",
     },
     [appKey]: {
@@ -138,7 +138,7 @@ export async function runCli(argv, cwd = process.cwd()) {
     options: {
       scope: { type: "string", default: "demo" },
       name: { type: "string" },
-      "app-key": { type: "string", default: "fuyu" },
+      "app-key": { type: "string", default: "cordis" },
       window: { type: "string", default: "main" },
       slot: { type: "string" },
       help: { type: "boolean", short: "h", default: false },

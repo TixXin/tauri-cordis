@@ -25,7 +25,7 @@ function packageDepthOf(depth) {
 export function resolveBuildOptions(options = {}) {
   const packageDepth = packageDepthOf(options.packageDepth);
   return {
-    appKey: options.appKey ?? "fuyu",
+    appKey: options.appKey ?? "cordis",
     official: options.official ?? false,
     allowExperimental: options.allowExperimental ?? true,
     shared: options.shared ?? DEFAULT_SHARED_MODULES,

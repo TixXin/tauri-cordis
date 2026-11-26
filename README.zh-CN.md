@@ -168,7 +168,7 @@ npm create tauri-cordis-plugin@latest my-plugin
 - **插件不在沙箱里。** 插件的宿主部分就是普通的 Node 代码，权限和用户一样。「同权」就是这个意思，插件能干实事也是因为这个。防线在安装之前：签名、审核、撤销。如果你要跑完全不信任的代码，请用带隔离的方案。细节见[安全模型](./docs/security.md)。
 - **插件界面用 React。** 插槽渲染的是 React 组件，插件和应用共用一份 React。
 - **还在 0.x。** 小版本之间接口还可能变。哪些稳定、哪些不稳定见[稳定性](./docs/stability.md)。
-- **0.2 里有些名字还是浮屿的**：清单键是 `fuyu`，安装包后缀是 `.fuyu`，命令行帮助里写的是 `fuyu-plugin`。有的现在能改，有的还不能，逐项列在[稳定性](./docs/stability.md#names-inherited-from-fuyu)里；计划在 0.3 换成中性的默认值。
+- **有些默认值是定死的**：宿主只认清单键 `cordis`，插槽类型里列的是一套内置的插槽名。逐项列在[稳定性](./docs/stability.md#default-names)里，写了现在能怎么办。
 
 ## 和别的方案比
 
@@ -196,7 +196,7 @@ tauri-cordis 就是 Cordis 加上桌面应用在它外面需要的那一圈：�
 
 ## 代码从哪来
 
-tauri-cordis 在[浮屿的仓库](https://github.com/TixXin/fuyu)里开发，从这个仓库发布。现在两边靠手工同步，已经有差别；改成单一来源的事在 [TixXin/fuyu#1040](https://github.com/TixXin/fuyu/issues/1040) 里跟。issue 和 PR 提在这个仓库就行，见 [CONTRIBUTING.md](./CONTRIBUTING.md)。
+tauri-cordis 在[浮屿的仓库](https://github.com/TixXin/fuyu)里开发，从这个仓库发布。这里的源码由浮屿仓库里的一个导出脚本生成，CI 会核对两边一致。issue 和 PR 提在这个仓库就行，见 [CONTRIBUTING.md](./CONTRIBUTING.md)。
 
 ## 致谢
 

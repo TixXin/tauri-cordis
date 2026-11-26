@@ -114,14 +114,14 @@ impl Inner {
         (self.on_event)(Event::State(state));
     }
 
-    fn pause(&self, duration: Duration) -> bool {
+    fn pause(&self, duration: Duration, poke_wakes: bool) -> bool {
         let deadline = Instant::now() + duration;
         let mut control = lock(&self.control);
         loop {
             if control.stop || control.restart {
                 return control.stop;
             }
-            if std::mem::take(&mut control.poke) {
+            if std::mem::take(&mut control.poke) && poke_wakes {
                 return false;
             }
             let left = deadline.saturating_duration_since(Instant::now());
@@ -235,13 +235,17 @@ struct Running {
     _guard: Box<dyn Send>,
 }
 
-fn launch(inner: &Arc<Inner>, spec: &HostSpec, containment: &dyn Containment) -> Result<Running, String> {
-    let mut command = Command::new(&spec.program);
+fn host_command(spec: &HostSpec) -> Command {
+    let mut command = crate::node::node_command(&spec.program);
     command.args(&spec.args).envs(spec.env.iter().map(|(key, value)| (key, value))).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
     if let Some(dir) = &spec.current_dir {
         command.current_dir(dir);
     }
-    crate::node::hide_window(&mut command);
+    command
+}
+
+fn launch(inner: &Arc<Inner>, spec: &HostSpec, containment: &dyn Containment) -> Result<Running, String> {
+    let mut command = host_command(spec);
     containment.prepare(&mut command);
     let mut child = command.spawn().map_err(|error| format!("could not start {}: {error}", spec.program.display()))?;
     let guard = match containment.adopt(&child) {
@@ -312,8 +316,8 @@ fn exit_reason(child: &mut Child, within: Duration) -> Option<String> {
 fn check_protocol(ready: Value) -> Result<Value, String> {
     match ready.get("protocol").and_then(Value::as_u64) {
         Some(PROTOCOL) => Ok(ready),
-        Some(other) => Err(format!("the plugin host speaks protocol {other}, but Fuyu only speaks protocol {PROTOCOL}; the host and the app do not match")),
-        None => Err(format!("the plugin host did not say which protocol it speaks; Fuyu only speaks protocol {PROTOCOL}")),
+        Some(other) => Err(format!("the plugin host speaks protocol {other}, but this app only speaks protocol {PROTOCOL}; the host and the app do not match")),
+        None => Err(format!("the plugin host did not say which protocol it speaks; this app only speaks protocol {PROTOCOL}")),
     }
 }
 
@@ -339,7 +343,7 @@ fn wait_ready(inner: &Inner, running: &mut Running, timing: &Timing) -> Result<V
 
 fn watch(inner: &Inner, running: &mut Running, timing: &Timing) -> Option<String> {
     loop {
-        if inner.pause(timing.ping_every) {
+        if inner.pause(timing.ping_every, true) {
             return None;
         }
         if inner.take_restart() {
@@ -416,7 +420,7 @@ fn supervise(inner: &Arc<Inner>, mut spec_for: impl FnMut(u32) -> HostSpec, cont
         failures += 1;
         let retry_in = timing.backoff(failures - 1);
         inner.set(HostState::Down { generation, reason, retry_in });
-        if inner.pause(retry_in) {
+        if inner.pause(retry_in, false) {
             break;
         }
     }
@@ -426,9 +430,14 @@ fn supervise(inner: &Arc<Inner>, mut spec_for: impl FnMut(u32) -> HostSpec, cont
 
 #[cfg(test)]
 mod tests {
-    use std::time::Duration;
+    use std::{
+        collections::BTreeMap,
+        ffi::{OsStr, OsString},
+        time::Duration,
+    };
 
-    use super::Timing;
+    use super::{host_command, HostSpec, Timing};
+    use crate::node::NODE_ENV_NOT_INHERITED;
 
     #[test]
     fn the_first_restart_is_immediate_then_the_wait_doubles_up_to_the_cap() {
@@ -436,5 +445,23 @@ mod tests {
         let waits: Vec<u128> = (0..10).map(|failures| timing.backoff(failures).as_millis()).collect();
         assert_eq!(waits, [0, 250, 500, 1000, 2000, 4000, 8000, 16000, 30000, 30000]);
         assert_eq!(timing.backoff(u32::MAX), Duration::from_secs(30));
+    }
+
+    #[test]
+    fn the_host_does_not_inherit_variables_that_change_how_node_runs_but_keeps_its_own() {
+        let spec = HostSpec {
+            program: "node".into(),
+            args: vec!["host.mjs".into()],
+            env: vec![("CORDIS_PLUGIN_HOST".into(), "1".into()), ("NODE_PATH".into(), "/set/by/cordis".into())],
+            current_dir: None,
+        };
+        let command = host_command(&spec);
+        let envs: BTreeMap<OsString, Option<OsString>> = command.get_envs().map(|(key, value)| (key.to_os_string(), value.map(OsStr::to_os_string))).collect();
+        for name in NODE_ENV_NOT_INHERITED.iter().filter(|name| **name != "NODE_PATH") {
+            assert_eq!(envs.get(OsStr::new(name)), Some(&None), "{name} should be removed");
+        }
+        assert_eq!(envs.get(OsStr::new("NODE_PATH")), Some(&Some("/set/by/cordis".into())));
+        assert_eq!(envs.get(OsStr::new("CORDIS_PLUGIN_HOST")), Some(&Some("1".into())));
+        assert!(!envs.contains_key(OsStr::new("NODE_EXTRA_CA_CERTS")));
     }
 }

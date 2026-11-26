@@ -62,9 +62,9 @@ export function selectFiles(dir, app, files, { exclude = [], warn = () => {} } =
     add(clean, "files");
   }
   const referenced = [
-    ["fuyu.icon", app.icon],
-    ...(app.screenshots ?? []).map((shot, index) => [`fuyu.screenshots[${index}].path`, shot?.path]),
-    ["fuyu.config", app.config],
+    ["cordis.icon", app.icon],
+    ...(app.screenshots ?? []).map((shot, index) => [`cordis.screenshots[${index}].path`, shot?.path]),
+    ["cordis.config", app.config],
   ];
   for (const [field, path] of referenced) {
     if (typeof path !== "string" || path.startsWith(`${OUTPUT_DIR}/`)) continue;

@@ -36,7 +36,7 @@ export interface DependencySummary {
 }
 
 export interface Report {
-  format: "fuyu-plugin-review/1";
+  format: "tauri-cordis-plugin-review/1";
   tier: Tier;
   plugin: { name: string | null; from: string | null; to: string | null };
   firstRelease: boolean;
@@ -79,7 +79,7 @@ export interface Writable {
   write(chunk: string): unknown;
 }
 
-export declare const FORMAT: "fuyu-plugin-review/1";
+export declare const FORMAT: "tauri-cordis-plugin-review/1";
 export declare const LINE_THRESHOLD: number;
 export declare function review(options: ReviewOptions): Report;
 export declare function compareVersions(previous: unknown, next: unknown): Report;

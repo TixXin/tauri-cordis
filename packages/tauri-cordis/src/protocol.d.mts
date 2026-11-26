@@ -1,4 +1,9 @@
 export { SERVICE_NAME } from "@tauri-cordis/manifest/names";
+export type LocaleId = "zh-CN" | "en";
+export type LocalizedText = string | Readonly<Record<string, string>>;
+export declare const DEFAULT_LOCALE: "zh-CN";
+export function normalizeLocale(value: unknown): LocaleId;
+export function pickLocale(map: unknown, locale?: string): string;
 export declare const HOST_PROTOCOL: 2;
 export declare const WINDOW_PROTOCOL: 1;
 export declare const CLOSE: {
@@ -17,7 +22,7 @@ export declare const SHARED_MODULES: {
   readonly react: "__shared/react.js";
   readonly "react/jsx-runtime": "__shared/react-jsx-runtime.js";
 };
-export declare const HOST_SHARED_MODULES: readonly ["tauri-cordis", "fuyu-plugin", "tauri-cordis/services", "cordis"];
+export declare const HOST_SHARED_MODULES: readonly ["tauri-cordis", "tauri-cordis-plugin", "tauri-cordis/services"];
 export interface SlotDefinition {
   readonly kind: "list" | "single";
   readonly max?: number;
@@ -25,12 +30,14 @@ export interface SlotDefinition {
   readonly groupBy?: string;
   readonly meta: readonly string[];
   readonly experimental?: boolean;
+  readonly builtinOnly?: boolean;
 }
 export type SlotName =
   | "island.page/v1"
   | "island.header/v1"
   | "island.collapsed/v1"
   | "island.collapsed-center/v1"
+  | "island.widget/v1"
   | "island.alert/v1"
   | "island.notice/v1"
   | "island.line/v1"

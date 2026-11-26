@@ -3,7 +3,7 @@ import { createScratch, openSource } from "./sources.mjs";
 
 export function reviewSources({ oldSpec, newSpec, repo, path, oldBuilt = null, newBuilt = null }) {
   if (newSpec === "-") throw new Error("the new version cannot be -");
-  const scratch = createScratch("fuyu-plugin-review-");
+  const scratch = createScratch("tauri-cordis-plugin-review-");
   try {
     const previous = openSource(oldSpec, { repo, path, scratch, label: "old" });
     const next = openSource(newSpec, { repo, path, scratch, label: "new" });

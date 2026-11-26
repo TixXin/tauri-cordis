@@ -12,7 +12,7 @@ export function cooledDown(entry, now, cooldownDays = COOLDOWN_DAYS) {
   return toTime(now) - timeOf(entry.publishedAt) >= cooldownDays * DAY;
 }
 
-export function selectVersions(plugin, { fuyuVersion, platform, now, installed = null, revocations = null, prerelease = false, cooldownDays = COOLDOWN_DAYS }) {
+export function selectVersions(plugin, { cordisVersion, platform, now, installed = null, revocations = null, prerelease = false, cooldownDays = COOLDOWN_DAYS }) {
   const at = toTime(now);
   const candidates = [];
   const skipped = [];
@@ -20,7 +20,7 @@ export function selectVersions(plugin, { fuyuVersion, platform, now, installed =
     const revocation = revocationOf(revocations, plugin.name, entry.version);
     let reason = null;
     if (!entry.platforms?.includes(platform)) reason = "platform";
-    else if (!satisfies(fuyuVersion, entry.engines?.fuyu)) reason = "engines";
+    else if (!satisfies(cordisVersion, entry.engines?.cordis, { includePrerelease: true })) reason = "engines";
     else if (!prerelease && isPrerelease(entry.version)) reason = "prerelease";
     else if (revocation?.level === "disable") reason = "revoked";
     if (reason) skipped.push({ version: entry.version, reason });

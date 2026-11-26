@@ -74,7 +74,7 @@ Neither file cleans up after itself. When the plugin is switched off, the handle
 - [Writing a plugin](https://github.com/TixXin/tauri-cordis/blob/main/docs/writing-plugins.md)
 - [Security model](https://github.com/TixXin/tauri-cordis/blob/main/docs/security.md): plugins are not sandboxed. Read this before you choose it.
 - [Guarantees](https://github.com/TixXin/tauri-cordis/blob/main/docs/guarantees.md): what the runtime promises, each with its test.
-- [Stability](https://github.com/TixXin/tauri-cordis/blob/main/docs/stability.md): this is 0.x, and some defaults still carry Fuyu's names.
+- [Stability](https://github.com/TixXin/tauri-cordis/blob/main/docs/stability.md): this is 0.x, and some defaults are still fixed.
 
 Requires Node 22.15 or newer for the host. The kernel is [Cordis](https://github.com/cordiverse/cordis), vendored in `vendor/` with its license.
 
