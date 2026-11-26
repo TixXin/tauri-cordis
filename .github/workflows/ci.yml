@@ -83,4 +83,4 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 26
-      - run: node .fuyu/scripts/cordis/export.mjs check --cordis . --verbose
+      - run: node .fuyu/scripts/cordis/export.mjs check --cordis "$GITHUB_WORKSPACE" --verbose
